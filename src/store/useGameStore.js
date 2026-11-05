@@ -1,0 +1,66 @@
+import { create } from 'zustand'
+import { timeGreeting } from '../lib/greeting'
+
+const GREETING_MS = 5500
+
+export const ZONE_IDS = ['spawn', 'about', 'projects', 'journey', 'contact']
+
+export const useGameStore = create((set, get) => ({
+  mode: 'game', // 'game' | 'classic'
+  ready: false,
+  loadProgress: 8,
+  canRun3D: true,
+  autoClassic: false,
+  quality: 'high', // 'high' | 'low'
+  panel: null, // { type: 'about' | 'project' | 'contact', id? }
+  nearby: null, // the interactable in range
+  visited: {},
+  achievement: false,
+  milestone: null, // index of the scroll currently on screen
+  milestonesSeen: {},
+  tutorialDone: false,
+  muted: true,
+  fading: false,
+  discovered: {},
+  greeting: null, // { title, line, until } while the character is waving
+  toast: null, // { id, title, text }
+  weather: 'clear',
+  clock: '--:--',
+  phase: '',
+
+  setMode: (mode) => set({ mode, panel: null, nearby: null, ready: false, loadProgress: 45 }),
+  setReady: () => set({ ready: true }),
+  setQuality: (quality) => set({ quality }),
+  setNearby: (nearby) => { if (get().nearby?.id !== nearby?.id) set({ nearby }) },
+  openPanel: (panel) => set({ panel }),
+  closePanel: () => set({ panel: null }),
+  finishTutorial: () => { if (!get().tutorialDone) set({ tutorialDone: true }) },
+  setMuted: (muted) => set({ muted }),
+  setFading: (fading) => set({ fading }),
+  dismissAchievement: () => set({ achievement: false }),
+  clearMilestone: () => set({ milestone: null }),
+
+  markVisited: (zone) => {
+    const { visited } = get()
+    if (visited[zone]) return
+    const next = { ...visited, [zone]: true }
+    if (ZONE_IDS.every((z) => next[z])) set({ visited: next, achievement: 'zones' })
+    else set({ visited: next })
+  },
+  greet: () => set({ greeting: { ...timeGreeting(), until: performance.now() + GREETING_MS } }),
+  endGreeting: () => { if (get().greeting) set({ greeting: null }) },
+  showToast: (title, text) => set({ toast: { id: Date.now(), title, text } }),
+  clearToast: () => set({ toast: null }),
+  discover: (id, title, text, total) => {
+    const { discovered } = get()
+    if (discovered[id]) return
+    const next = { ...discovered, [id]: true }
+    set({ discovered: next, toast: { id: Date.now(), title: `Discovered: ${title}`, text } })
+    if (Object.keys(next).length === total) set({ achievement: 'world' })
+  },
+  revealMilestone: (index) => {
+    const { milestonesSeen } = get()
+    if (milestonesSeen[index]) return
+    set({ milestone: index, milestonesSeen: { ...milestonesSeen, [index]: true } })
+  },
+}))
