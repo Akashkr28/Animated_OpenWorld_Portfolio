@@ -11,7 +11,7 @@ import { camera, player } from './playerState'
 import { heightAt, isWalkable, waterLevelAt } from '../world/heightfield'
 import { SPAWN } from '../world/layout'
 import { useGameStore } from '../../store/useGameStore'
-import { sfx } from '../../lib/audio'
+import { setAmbience } from '../../lib/audio'
 
 const WALK = 3.8
 const RUN = 7.2
@@ -30,7 +30,7 @@ export default function Player() {
   const collider = useRef()
   const visual = useRef()
   const controller = useRef()
-  const state = useRef({ vx: 0, vz: 0, vy: 0, airTime: 0, stride: 0, safe: new THREE.Vector3(SPAWN.x, 3, SPAWN.z) })
+  const state = useRef({ vx: 0, vz: 0, vy: 0, airTime: 0, stride: 0, lift: 0, safe: new THREE.Vector3(SPAWN.x, 3, SPAWN.z) })
   const dust = useRef()
   const wake = useRef()
   const center = useRef(new THREE.Vector3(SPAWN.x, heightAt(SPAWN.x, SPAWN.z) + FOOT_OFFSET + 0.05, SPAWN.z))
@@ -80,10 +80,10 @@ export default function Player() {
     const sin = Math.sin(camera.yaw), cos = Math.cos(camera.yaw)
     const dirX = -sin * move.y + cos * move.x
     const dirZ = -cos * move.y - sin * move.x
-    // Standing water drags at the legs.
+    // The robot hovers, so water doesn't slow it: it rides above the surface instead.
     const surface = waterLevelAt(c.x, c.z)
     const depth = Math.max(0, surface - (c.y - FOOT_OFFSET))
-    const top = (move.run ? RUN : WALK) * (1 - Math.min(0.55, depth * 0.6))
+    const top = move.run ? RUN : WALK
     const grip = 1 - Math.exp(-(player.grounded ? 12 : 3.5) * dt)
     s.vx += (dirX * top - s.vx) * grip
     s.vz += (dirZ * top - s.vz) * grip
@@ -144,17 +144,19 @@ export default function Player() {
       player.yaw += angleDelta(player.yaw, camera.yaw) * Math.min(1, dt * 6)
       if (player.grounded) player.anim = 'wave'
     }
+    s.lift += (depth - s.lift) * Math.min(1, dt * 6)
     visual.current.position.copy(player.position)
+    visual.current.position.y += s.lift
     visual.current.rotation.y = player.yaw
 
     // Footfalls are measured by distance, so dust and sound track the real stride.
+    setAmbience({ hover: 0.35 + Math.min(1, player.speed / RUN) * 0.65 })
     if (player.grounded && player.speed > 0.8) {
       s.stride += traveled
       if (s.stride > (player.anim === 'run' ? 1.9 : 1.15)) {
         s.stride = 0
         if (depth > 0.08) wake.current?.ring(c.x, surface + 0.03, c.z)
         else dust.current?.puff(player.position, player.anim === 'run' ? 3 : 1)
-        sfx('step')
       }
     }
   })

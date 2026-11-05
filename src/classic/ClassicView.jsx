@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Bio, ContactForm, ContactLinks, Education, ProjectCard, Skills } from '../ui/panels/content'
+import { Bio, ContactForm, ContactLinks, Education, ProjectCard, ResumeButton, Skills } from '../ui/panels/content'
 import { milestones, profile, projects } from '../data/portfolio'
 import { timeGreeting } from '../lib/greeting'
 import { useGameStore } from '../store/useGameStore'
@@ -50,13 +50,14 @@ export default function ClassicView() {
           <p className="font-semibold text-apricot">{timeGreeting().title} I'm a {profile.title.toLowerCase()}</p>
           <h1 className="mt-1 font-display text-5xl leading-none font-extrabold sm:text-7xl">{profile.name}</h1>
           <p className="mt-4 max-w-xl text-lg text-cream/85">{profile.tagline}</p>
+          <div className="mt-5"><ResumeButton /></div>
         </motion.div>
 
         <Section id="about" title="About">
           <div className="grid gap-8 md:grid-cols-2">
             <div>
               <Bio />
-              <h3 className="mt-6 mb-2 font-display text-xl font-bold">Education</h3>
+              <h3 className="mt-6 mb-2 font-display text-xl font-bold">Education and certification</h3>
               <Education />
             </div>
             <div>
@@ -93,6 +94,7 @@ export default function ClassicView() {
 
         <Section id="contact" title="Contact">
           <ContactLinks />
+          <div className="mt-3"><ResumeButton /></div>
           <div className="mt-6"><ContactForm /></div>
         </Section>
       </main>

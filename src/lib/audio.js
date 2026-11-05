@@ -72,6 +72,16 @@ function start() {
   layer('rain', 'highpass', 1800)
   layer('water', 'bandpass', 900, 0.5)
 
+  // The robot's soft hover hum.
+  const hum = ctx.createOscillator()
+  hum.type = 'triangle'
+  hum.frequency.value = 118
+  const hover = ctx.createGain()
+  hover.gain.value = 0
+  hum.connect(hover).connect(master)
+  hum.start()
+  bed.hover = { gain: hover, pitch: hum.frequency }
+
   // Crickets: a high tone chopped into quick pulses.
   const cricket = ctx.createOscillator()
   cricket.frequency.value = 4300
@@ -91,13 +101,14 @@ function start() {
   bed.night = { gain: night }
 }
 
-const LEVELS = { wind: 0.16, rain: 0.09, water: 0.11, night: 0.008 }
+const LEVELS = { wind: 0.16, rain: 0.09, water: 0.11, night: 0.008, hover: 0.022 }
 
 // Called every frame, so it only touches the layers that are passed in.
 export function setAmbience(levels) {
   if (!ctx || ctx.state !== 'running') return
   for (const name in levels) {
     bed[name].gain.gain.setTargetAtTime(levels[name] * LEVELS[name], ctx.currentTime, 0.4)
+    if (name === 'hover') bed.hover.pitch.setTargetAtTime(95 + levels.hover * 70, ctx.currentTime, 0.2)
     if (name === 'wind') bed.wind.filter.frequency.setTargetAtTime(300 + levels.wind * 560, ctx.currentTime, 0.5)
   }
 }
@@ -146,7 +157,6 @@ const SFX = {
   open: () => { tone(523, 0, 0.16, 0.12); tone(784, 0.07, 0.22, 0.1) },
   close: () => tone(392, 0, 0.14, 0.08),
   reveal: () => { tone(659, 0, 0.3, 0.09); tone(988, 0.1, 0.4, 0.07) },
-  step: () => tone(90 + Math.random() * 30, 0, 0.06, 0.05, 'triangle'),
   achievement: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.5, 0.1)),
 }
 export function sfx(name) {

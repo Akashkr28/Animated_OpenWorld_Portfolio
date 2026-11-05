@@ -47,7 +47,7 @@ export default function Lighting({ shadows }) {
     <>
       <fog attach="fog" args={['#ffe6c7', 90, 430]} />
       <hemisphereLight ref={hemi} />
-      <pointLight ref={lantern} color="#ffc98a" distance={20} decay={1.6} />
+      <pointLight ref={lantern} color="#a9dcff" distance={20} decay={1.6} />
       <directionalLight
         ref={sun}
         castShadow={shadows}

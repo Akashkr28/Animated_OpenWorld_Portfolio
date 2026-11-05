@@ -17,6 +17,7 @@ export const useGameStore = create((set, get) => ({
   visited: {},
   achievement: false,
   milestone: null, // index of the scroll currently on screen
+  milestoneQueue: [], // stones passed while another scroll is still being read
   milestonesSeen: {},
   tutorialDone: false,
   muted: true,
@@ -38,7 +39,10 @@ export const useGameStore = create((set, get) => ({
   setMuted: (muted) => set({ muted }),
   setFading: (fading) => set({ fading }),
   dismissAchievement: () => set({ achievement: false }),
-  clearMilestone: () => set({ milestone: null }),
+  clearMilestone: () => {
+    const [next = null, ...rest] = get().milestoneQueue
+    set({ milestone: next, milestoneQueue: rest })
+  },
 
   markVisited: (zone) => {
     const { visited } = get()
@@ -59,8 +63,10 @@ export const useGameStore = create((set, get) => ({
     if (Object.keys(next).length === total) set({ achievement: 'world' })
   },
   revealMilestone: (index) => {
-    const { milestonesSeen } = get()
+    const { milestone, milestoneQueue, milestonesSeen } = get()
     if (milestonesSeen[index]) return
-    set({ milestone: index, milestonesSeen: { ...milestonesSeen, [index]: true } })
+    const seen = { ...milestonesSeen, [index]: true }
+    if (milestone === null) set({ milestone: index, milestonesSeen: seen })
+    else set({ milestoneQueue: [...milestoneQueue, index], milestonesSeen: seen })
   },
 }))

@@ -19,7 +19,7 @@ const Dust = forwardRef(function Dust(_, ref) {
         const m = motes[cursor.current]
         cursor.current = (cursor.current + 1) % COUNT
         m.age = 0
-        m.size = 0.07 + Math.random() * 0.09
+        m.size = 0.05 + Math.random() * 0.06
         m.position.set(at.x + (Math.random() - 0.5) * 0.3, at.y + 0.08, at.z + (Math.random() - 0.5) * 0.3)
         m.velocity.set((Math.random() - 0.5) * 0.9, 0.5 + Math.random() * 0.5, (Math.random() - 0.5) * 0.9)
       }
@@ -43,7 +43,7 @@ const Dust = forwardRef(function Dust(_, ref) {
   return (
     <instancedMesh ref={mesh} args={[null, null, COUNT]} frustumCulled={false}>
       <icosahedronGeometry args={[1, 0]} />
-      <meshLambertMaterial color="#eedcb8" flatShading />
+      <meshLambertMaterial color="#f4efe6" />
     </instancedMesh>
   )
 })

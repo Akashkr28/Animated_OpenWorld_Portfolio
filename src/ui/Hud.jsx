@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti'
 import Minimap from './Minimap'
 import Joystick from './Joystick'
 import PanelHost from './panels/PanelHost'
+import { ResumeButton } from './panels/content'
 import { input, interact } from '../game/player/input'
 import { discoveries, milestones, profile, zoneText } from '../data/portfolio'
 import { setWeather, skipToTime, TIMES, WEATHER, WEATHER_ORDER } from '../game/world/environment'
@@ -11,6 +12,7 @@ import { setMuted, sfx } from '../lib/audio'
 import { useGameStore, ZONE_IDS } from '../store/useGameStore'
 
 const SCROLL_MS = 7000
+const QUEUED_SCROLL_MS = 4500 // long enough to read when another scroll is waiting
 const GREET_DELAY_MS = 900
 const hudButton = 'glass rounded-full px-3.5 py-2 text-sm font-semibold hover:bg-night/80'
 
@@ -162,14 +164,18 @@ function Toast() {
 function MilestoneScroll() {
   const index = useGameStore((s) => s.milestone)
   const clear = useGameStore((s) => s.clearMilestone)
+  const waiting = useGameStore((s) => s.milestoneQueue.length > 0)
   const reduced = useReducedMotion()
 
   useEffect(() => {
+    if (index !== null) sfx('reveal')
+  }, [index])
+
+  useEffect(() => {
     if (index === null) return
-    sfx('reveal')
-    const id = setTimeout(clear, SCROLL_MS)
+    const id = setTimeout(clear, waiting ? QUEUED_SCROLL_MS : SCROLL_MS)
     return () => clearTimeout(id)
-  }, [index, clear])
+  }, [index, waiting, clear])
 
   const m = milestones[index]
   return (
@@ -253,6 +259,7 @@ export default function Hud({ touch }) {
     if (!!s.panel !== !!prev.panel) sfx(s.panel ? 'open' : 'close')
   }), [])
 
+  const openMap = () => useGameStore.getState().openPanel({ type: 'map' })
   const toggleMute = () => {
     setMuted(!muted)
     setMutedState(!muted)
@@ -272,6 +279,11 @@ export default function Hud({ touch }) {
               <p className="text-xs text-cream/80">{profile.title}</p>
             </div>
             <Checklist />
+            {/* On phones these sit here so they don't cover the character's speech bubble. */}
+            <div className="flex gap-2 sm:hidden">
+              <button type="button" onClick={openMap} className={hudButton}>Map</button>
+              <ResumeButton label="Resume" className={hudButton} />
+            </div>
           </div>
 
           <div className="absolute top-3 right-3 flex flex-col items-end gap-2 sm:top-4 sm:right-4">
@@ -287,9 +299,10 @@ export default function Hud({ touch }) {
             </div>
             <Minimap />
             <WorldControls />
-            <button type="button" onClick={() => useGameStore.getState().openPanel({ type: 'map' })} className={hudButton}>
-              World map
-            </button>
+            <div className="hidden flex-col items-end gap-2 sm:flex">
+              <button type="button" onClick={openMap} className={hudButton}>World map</button>
+              <ResumeButton className={hudButton} />
+            </div>
           </div>
 
           <MilestoneScroll />

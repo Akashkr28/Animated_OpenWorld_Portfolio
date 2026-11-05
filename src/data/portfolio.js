@@ -6,7 +6,7 @@ export const profile = {
   tagline: 'React, Node.js and Python, with an MCA specialising in AI/ML.',
   bio: [
     "I'm a full-stack developer working with React, Node.js and TypeScript, and adding AI features to web apps.",
-    'I worked in accounting before software, so I enjoy building tools for finance and operations teams: billing, reconciliation, reporting, the boring stuff that eats people\'s afternoons.',
+    'I\'ve worked in accounting since 2022, so I enjoy building tools for finance and operations teams: billing, reconciliation, reporting, the boring stuff that eats people\'s afternoons.',
     'I take on freelance projects alongside my MCA.',
   ],
 }
@@ -17,19 +17,25 @@ export const greetings = {
   afternoon: 'Good afternoon!',
   evening: 'Good evening!',
   night: 'Hello, night owl!',
-  intro: "I'm Akash. Welcome to my island.",
+  intro: "I'm Akash's guide bot. Welcome to his island!",
 }
 
 export const education = [
-  { degree: 'Master of Computer Applications (AI/ML)', school: 'Amity University Online', when: 'In progress' },
+  { degree: 'Master of Computer Applications (AI & ML)', school: 'Amity University Online', when: 'Jan 2026 – Present' },
+  { degree: 'Master of Business Administration (Finance)', school: 'IGNOU', when: 'Jan 2022 – Dec 2025' },
+  { degree: 'Bachelor of Commerce (Accountancy)', school: 'Karim City College', when: 'Aug 2013 – Jul 2016' },
+]
+
+export const certifications = [
+  { degree: 'Full Stack Web Development', school: 'Physics Wallah', when: 'Aug 2023 – Feb 2025' },
 ]
 
 export const skills = [
-  { group: 'Frontend', items: ['React', 'TypeScript', 'JavaScript', 'Tailwind', 'Redux', 'Zustand', 'React Query'] },
-  { group: 'Backend', items: ['Node.js', 'Express', 'Prisma', 'Mongoose', 'Socket.io', 'REST', 'OAuth 2.0'] },
+  { group: 'Frontend', items: ['React', 'Next.js', 'TypeScript', 'JavaScript', 'Tailwind', 'Redux', 'Zustand', 'React Query'] },
+  { group: 'Backend', items: ['Node.js', 'Express', 'FastAPI', 'Prisma', 'Mongoose', 'WebSockets', 'Socket.io', 'REST', 'OAuth 2.0', 'JWT'] },
   { group: 'Data', items: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite'] },
   { group: 'AI', items: ['Python', 'LLM APIs', 'Prompt engineering', 'LLM-as-judge evaluation'] },
-  { group: 'Tools', items: ['Git', 'Jest', 'Postman', 'Swagger', 'Firebase', 'Cloudinary', 'Figma'] },
+  { group: 'Tools', items: ['Git', 'Linux', 'Jest', 'pytest', 'Postman', 'Swagger', 'Firebase', 'Twilio', 'Vercel', 'Netlify', 'Cloudinary', 'Figma'] },
 ]
 
 // One pedestal is created per project. Set github or demo to null to hide that link.
@@ -49,9 +55,9 @@ export const projects = [
   {
     id: 'diksha',
     title: 'D.I.K.S.H.A',
-    summary: 'Voice AI assistant',
-    description: 'A voice AI assistant built with Next.js and TypeScript.',
-    tech: ['Next.js', 'TypeScript', 'Voice AI'],
+    summary: 'Voice AI assistant portfolio page',
+    description: 'A full-fledged voice AI assistant portfolio page. D.I.K.S.H.A (Digital Intelligence for Knowledge, Speech & Human Assistance) guides visitors through my work out loud, and they can talk to it to ask about me and my projects.',
+    tech: ['Next.js', 'TypeScript', 'Three.js', 'Claude API', 'ElevenLabs'],
     image: '/projects/diksha.svg',
     imageAlt: 'Illustration of a voice waveform',
     github: 'https://github.com/Akashkr28/D.I.K.S.H.A',
@@ -61,9 +67,9 @@ export const projects = [
   {
     id: 'tour-billing',
     title: 'Tour & Travel Billing',
-    summary: 'Billing app for a travel business',
-    description: 'A billing app for a tour and travel business.',
-    tech: ['Billing', 'Web app'],
+    summary: 'Staff billing app for a travel company',
+    description: 'A staff-only billing and invoice web app for a tour and travel company, built solo as a freelancer from requirements through to deployment. AI-assisted features generate trip summaries, flag unusual charges and suggest line items, cutting manual checking for staff.',
+    tech: ['React', 'Node.js', 'Express', 'PostgreSQL', 'Prisma', 'Redis'],
     image: '/projects/tour-billing.svg',
     imageAlt: 'Illustration of an invoice beside a route line',
     github: null,
@@ -71,56 +77,35 @@ export const projects = [
     color: '#ffc27a',
   },
   {
-    id: 'processiq',
-    title: 'ProcessIQ',
-    summary: 'Scores where AI can help a business',
-    description: 'Research engine that analyses 100 business processes and scores where AI could help, built end to end in two days for an engineering challenge.',
-    tech: ['React', 'Node', 'SQLite', 'Groq'],
-    image: '/projects/processiq.svg',
-    imageAlt: 'Illustration of a process flow with scored nodes',
-    github: 'https://github.com/Akashkr28/ProcessIQ',
-    demo: null,
-    color: '#9c8cff',
-  },
-  {
-    id: 'sentinel',
-    title: 'SENTINEL',
-    summary: 'Prompt injection attack and defence playground',
-    description: 'Prompt injection attack and defence playground. You try to break the model; it shows which defence caught you and why.',
-    tech: ['React', 'Node', 'Claude API'],
-    image: '/projects/sentinel.svg',
-    imageAlt: 'Illustration of a shield deflecting incoming lines',
-    github: 'https://github.com/Akashkr28/Sentinel_Prompt_Injection_Attack_and_Defense',
-    demo: null,
+    id: 'shopfloor-sentinel',
+    title: 'Shopfloor Sentinel',
+    summary: 'Cyber health dashboard for factories',
+    description: 'A traffic-light cyber health dashboard for small and medium factories. A passive gateway on a Raspberry Pi or old PC watches the plant network and machine logs, and Sentinel turns each finding into a green, amber or red alert card with a 3-step script in Hindi, Marathi, Tamil or English. It messages the owner on WhatsApp or SMS, instantly for red alerts. Built for the TCS iON Hackathon.',
+    tech: ['React', 'Node.js', 'Express', 'SQLite', 'Python', 'Claude API'],
+    image: '/projects/shopfloor-sentinel.svg',
+    imageAlt: 'Illustration of a traffic light beside a factory network',
+    github: 'https://github.com/Akashkr28/Shopfloor_Sentinel_Dashboard',
+    demo: 'https://shopfloor-sentinel.fly.dev/setup-factory',
     color: '#ff5c8a',
-  },
-  {
-    id: 'promptforge',
-    title: 'PromptForge',
-    summary: 'Automated prompt optimiser',
-    description: 'A self-improving prompt engine that uses meta-prompting and LLM-as-judge evaluation to rewrite a task prompt, then shows how and by how much it improved with score curves and word-level diffs.',
-    tech: ['TypeScript', 'LLM APIs', 'LLM-as-judge'],
-    image: '/projects/promptforge.svg',
-    imageAlt: 'Illustration of a score curve rising over iterations',
-    github: 'https://github.com/Akashkr28/Prompt_Forge_A_Prompt_Optimizer_Tool',
-    demo: 'https://prompt-forge-a-prompt-optimizer-too.vercel.app',
-    color: '#7ad7f0',
   },
 ]
 
 // One stone per milestone, placed along the road in this order.
 export const milestones = [
-  { when: 'Education', title: 'MCA in AI/ML', text: 'Studying for a Master of Computer Applications at Amity University Online, specialising in AI and machine learning.' },
-  { when: '2022 onward', title: 'Accounting at Phoenix Engineers', text: 'Working in accounting at Phoenix Engineers, which is where my interest in tools for finance and operations teams comes from.' },
-  { when: 'Freelance', title: 'Freelance projects', text: 'Taking on freelance builds alongside work and study, with a soft spot for billing and operations tools.' },
-  { when: 'Hackathons', title: 'Hackathons and challenges', text: 'Building against the clock, from Book My Ticket to ProcessIQ, a full research engine shipped in two days.' },
-  { when: 'Now', title: 'What I\'m working toward', text: 'Building a RAG project and an AI-assisted bank reconciliation tool, and writing about what I learn on Hashnode.' },
+  { when: '2013 – 2025', title: 'Commerce and finance', text: 'I earned a B.Com in Accountancy at Karim City College, then an MBA in Finance at IGNOU.' },
+  { when: 'Sep 2022 – Present', title: 'Accounting at Phoenix Engineers', text: 'I work in accounting at Phoenix Engineers, where my interest in tools for finance and operations teams began.' },
+  { when: 'Aug 2023 – Feb 2025', title: 'Learning full-stack development', text: 'I completed the Full Stack Web Development certification at Physics Wallah.' },
+  { when: 'Freelance', title: 'Freelance projects', text: 'I take on client projects alongside my studies, including a billing and invoicing system I built solo for a travel company.' },
+  { when: 'Jan 2026 – Present', title: 'MCA in AI & ML', text: 'I\'m studying for a Master of Computer Applications at Amity University Online, specialising in AI and machine learning.' },
+  { when: '2026', title: 'Hackathons', text: 'I ranked 15th of 133 at the ChaiCode Chai Forms Hackathon, then built Shopfloor Sentinel for the TCS iON Hackathon.' },
+  { when: 'Now', title: 'What I\'m working toward', text: 'I\'m building a RAG project and an AI-assisted bank reconciliation tool, and writing about what I learn on Hashnode.' },
 ]
 
 export const contact = {
   email: 'akashkumarsingh816@gmail.com',
   linkedin: 'https://www.linkedin.com/in/akash-kumar-singh-2a3503364/',
   github: 'https://github.com/Akashkr28',
+  resume: '/resume/Akash_Kumar_Singh_Full_Stack_Resume.pdf',
 }
 
 // Hidden places in the wider world. Found by walking there.

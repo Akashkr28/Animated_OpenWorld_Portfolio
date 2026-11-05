@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import Panel from '../Panel'
 import WorldMap from './WorldMap'
-import { Bio, ContactForm, ContactLinks, Education, ProjectCard, Skills } from './content'
+import { Bio, ContactForm, ContactLinks, Education, ProjectCard, ResumeButton, Skills } from './content'
 import { profile, projects } from '../../data/portfolio'
 import { timeGreeting } from '../../lib/greeting'
 import { useGameStore } from '../../store/useGameStore'
@@ -20,7 +20,8 @@ function Body({ panel, onClose }) {
     return (
       <Panel eyebrow={`${timeGreeting().title} I'm a ${profile.title.toLowerCase()}`} title={profile.name} onClose={onClose}>
         <Bio />
-        <h3 className={heading}>Education</h3>
+        <div className="mt-4"><ResumeButton /></div>
+        <h3 className={heading}>Education and certification</h3>
         <Education />
         <h3 className={heading}>Skills</h3>
         <Skills />
@@ -38,6 +39,7 @@ function Body({ panel, onClose }) {
   return (
     <Panel eyebrow="Say hello" title="Get in touch" onClose={onClose}>
       <ContactLinks />
+      <div className="mt-3"><ResumeButton /></div>
       <h3 className={heading}>Send a message</h3>
       <ContactForm />
     </Panel>
