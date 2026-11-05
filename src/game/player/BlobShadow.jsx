@@ -19,6 +19,7 @@ export default function BlobShadow() {
   }, [])
 
   useFrame(() => {
+    mesh.current.visible = !player.sleeping
     const { x, y, z } = player.position
     const ground = heightAt(x, z)
     const lift = Math.min(1, Math.max(0, y - ground) / 3)

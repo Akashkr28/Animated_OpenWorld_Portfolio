@@ -25,6 +25,12 @@ export default function CharacterModel() {
   }, [scene])
 
   useFrame(() => {
+    // Runs after the clips: asleep, his eyes stay shut and his thrusters go out.
+    if (player.sleeping) {
+      scene.getObjectByName('eyesOpen')?.scale.set(1, 0.08, 1)
+      scene.getObjectByName('thrust')?.scale.setScalar(0.001)
+    }
+
     const next = actions[character.clips[player.anim]] ?? actions[character.clips.idle]
     if (!next) return
     if (current.current !== next) {

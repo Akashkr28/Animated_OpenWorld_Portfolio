@@ -4,6 +4,7 @@ import { useRapier } from '@react-three/rapier'
 import * as THREE from 'three'
 import { camera as cameraState, player } from './playerState'
 import { heightAt } from '../world/heightfield'
+import { HOUSE } from '../world/layout'
 import { world as shared } from '../world/uniforms'
 import { useGameStore } from '../../store/useGameStore'
 import { prefersReducedMotion } from '../../lib/device'
@@ -13,12 +14,22 @@ const MIN_DIST = 3.2
 const MAX_DIST = 12
 const PITCH_MIN = 0.08
 const PITCH_MAX = 1.05
+// Indoors the door wall hides and the camera looks in from the porch, like a doll's house, so
+// it never has to squeeze through a wall. Facing west matches the way the visitor walks in, so
+// the controls don't change direction at the threshold.
+const INDOOR_YAW = Math.PI / 2
+const INDOOR_X = HOUSE.x + 5.2
+const INDOOR_HEIGHT = 3.35
+const INDOOR_TRACK = 0.4 // how far it slides sideways with the player
+const INDOOR_LOOK_X = HOUSE.x + 1.5
+const lookAt = new THREE.Vector3()
+const scratch = new THREE.Vector3()
 
 export default function FollowCamera() {
   const { rapier, world } = useRapier()
   const three = useThree((s) => s.camera)
   const dom = useThree((s) => s.gl.domElement)
-  const orbit = useRef({ pitch: 0.34, zoom: 7.6, dist: 7.6, dragging: false, lastX: 0, lastY: 0, id: null, touchedAt: -10 })
+  const orbit = useRef({ pitch: 0.34, zoom: 7.6, dist: 7.6, indoor: 0, dragging: false, lastX: 0, lastY: 0, id: null, touchedAt: -10 })
   const focus = useRef(new THREE.Vector3())
   const started = useRef(false)
   const reduced = useRef(prefersReducedMotion())
@@ -74,7 +85,10 @@ export default function FollowCamera() {
     }
 
     // Swings gently behind the direction of travel. sin() leaves straight-back movement alone.
-    if (!reduced.current && !o.dragging && !paused && player.speed > 1) {
+    const blend = reduced.current ? 1 : 1 - Math.exp(-5 * dt)
+    o.indoor += ((player.indoors ? 1 : 0) - o.indoor) * blend
+    if (player.indoors) cameraState.yaw += Math.atan2(Math.sin(INDOOR_YAW - cameraState.yaw), Math.cos(INDOOR_YAW - cameraState.yaw)) * blend
+    else if (!reduced.current && !o.dragging && !paused && player.speed > 1) {
       const behind = player.yaw + Math.PI
       const side = Math.sin(behind - cameraState.yaw)
       cameraState.yaw += side * 0.75 * dt * Math.min(1, player.speed / 4)
@@ -105,7 +119,12 @@ export default function FollowCamera() {
     const cz = focus.current.z + dirZ * o.dist
     const cy = Math.max(focus.current.y + dirY * o.dist, Math.max(heightAt(cx, cz), 0) + 0.45)
     three.position.set(cx, cy, cz)
-    three.lookAt(focus.current)
+    lookAt.copy(focus.current)
+    if (o.indoor > 0.001) {
+      three.position.lerp(scratch.set(INDOOR_X, heightAt(HOUSE.x, HOUSE.z) + INDOOR_HEIGHT, HOUSE.z + (z - HOUSE.z) * INDOOR_TRACK), o.indoor)
+      lookAt.lerp(scratch.set(Math.min(x, INDOOR_LOOK_X), y + 0.9, z), o.indoor)
+    }
+    three.lookAt(lookAt)
   })
 
   return null

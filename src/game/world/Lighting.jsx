@@ -5,6 +5,9 @@ import { env, updateEnvironment } from './environment'
 import { camera, player } from '../player/playerState'
 import { prefersReducedMotion } from '../../lib/device'
 
+const LANTERN = 15
+const INDOOR_LANTERN = 5 // the room has its own light, and close walls would blow out
+
 export default function Lighting({ shadows }) {
   const sun = useRef()
   const hemi = useRef()
@@ -40,7 +43,7 @@ export default function Lighting({ shadows }) {
     lantern.current.position.set(
       player.position.x + Math.sin(camera.yaw) * 1.6, player.position.y + 2.2, player.position.z + Math.cos(camera.yaw) * 1.6,
     )
-    lantern.current.intensity = env.dark * 15
+    lantern.current.intensity = env.dark * (player.indoors ? INDOOR_LANTERN : LANTERN)
   })
 
   return (

@@ -28,6 +28,20 @@ function Body({ panel, onClose }) {
       </Panel>
     )
   }
+  if (panel.type === 'skills') {
+    return (
+      <Panel eyebrow="From the bookshelf" title="Skills" onClose={onClose}>
+        <Skills />
+      </Panel>
+    )
+  }
+  if (panel.type === 'education') {
+    return (
+      <Panel eyebrow="On the wall" title="Education and certification" onClose={onClose}>
+        <Education />
+      </Panel>
+    )
+  }
   if (panel.type === 'project') {
     const project = projects.find((p) => p.id === panel.id)
     return (

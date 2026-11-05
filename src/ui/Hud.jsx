@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import Minimap from './Minimap'
@@ -113,7 +113,25 @@ function WorldControls() {
   const clock = useGameStore((s) => s.clock)
   const phase = useGameStore((s) => s.phase)
   const [timeIndex, setTimeIndex] = useState(2)
-  const nextWeather = () => setWeather(WEATHER_ORDER[(WEATHER_ORDER.indexOf(weather) + 1) % WEATHER_ORDER.length])
+  const [picking, setPicking] = useState(false)
+  const box = useRef()
+
+  useEffect(() => {
+    if (!picking) return
+    const outside = (e) => { if (!box.current.contains(e.target)) setPicking(false) }
+    const escape = (e) => { if (e.key === 'Escape') setPicking(false) }
+    window.addEventListener('pointerdown', outside)
+    window.addEventListener('keydown', escape)
+    return () => {
+      window.removeEventListener('pointerdown', outside)
+      window.removeEventListener('keydown', escape)
+    }
+  }, [picking])
+
+  const pick = (name) => {
+    setWeather(name)
+    setPicking(false)
+  }
   const nextTime = () => {
     const next = (timeIndex + 1) % TIMES.length
     setTimeIndex(next)
@@ -121,15 +139,29 @@ function WorldControls() {
   }
   const chip = 'flex w-full items-center justify-between gap-3 rounded-lg px-1.5 py-1 hover:bg-cream/10'
   return (
-    <div className="glass w-32 rounded-2xl p-1.5 text-xs sm:w-40 sm:text-sm">
+    <div ref={box} className="glass relative z-20 w-32 rounded-2xl p-1.5 text-xs sm:w-40 sm:text-sm">
       <button type="button" onClick={nextTime} aria-label={`Time is ${clock}, ${phase}. Skip to ${TIMES[(timeIndex + 1) % TIMES.length][0]}`} className={chip}>
         <span className="font-semibold tabular-nums">{clock}</span>
         <span className="text-apricot">{phase}</span>
       </button>
-      <button type="button" onClick={nextWeather} aria-label={`Weather is ${WEATHER[weather].label}. Change weather`} className={chip}>
+      <button type="button" onClick={() => setPicking(!picking)} aria-expanded={picking} aria-label={`Weather is ${WEATHER[weather].label}. Change weather`} className={`${chip} bg-cream/10`}>
         <span className="font-semibold">Weather</span>
-        <span className="text-apricot">{WEATHER[weather].label}</span>
+        <span className="text-apricot">{WEATHER[weather].label} <span aria-hidden="true">▾</span></span>
       </button>
+      {picking && (
+        <ul className="absolute top-full right-0 z-10 mt-2 grid w-48 grid-cols-2 gap-1 rounded-2xl border border-cream/20 bg-night p-1.5 shadow-xl">
+          {WEATHER_ORDER.map((name) => (
+            <li key={name}>
+              <button
+                type="button" onClick={() => pick(name)} aria-pressed={name === weather}
+                className={`w-full rounded-lg px-2 py-2 text-sm font-semibold ${name === weather ? 'bg-coral text-night' : 'hover:bg-cream/10'}`}
+              >
+                {WEATHER[name].label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
@@ -255,6 +287,12 @@ export default function Hud({ touch }) {
     const id = setTimeout(() => useGameStore.getState().greet(), GREET_DELAY_MS)
     return () => clearTimeout(id)
   }, [ready])
+
+  // The classic page has no sound button, and nothing updates the island's levels there.
+  useEffect(() => () => {
+    setMuted(true)
+    useGameStore.getState().setMuted(true)
+  }, [])
 
   useEffect(() => useGameStore.subscribe((s, prev) => {
     if (!!s.panel !== !!prev.panel) sfx(s.panel ? 'open' : 'close')

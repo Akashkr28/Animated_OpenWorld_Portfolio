@@ -128,3 +128,14 @@ Zone positions, paths and pedestal layout are in `src/game/world/layout.js`. The
 - Panels trap focus, return it on close, and close with Esc.
 - Minimap destinations are keyboard-focusable buttons.
 - With `prefers-reduced-motion`, camera lag, wind, waves, birds, the day cycle, automatic weather, lightning flashes and confetti are turned off.
+
+## The house
+
+The About zone is a real room. The door opens as you approach, and the door wall hides while you're inside so the camera can look in from the porch. Rain stops at the roof and outdoor sound is muffled by the walls.
+
+- Laptop: the About panel.
+- Bed: sleep until morning.
+- Bookshelf: skills.
+- Certificate: education and certification.
+
+Furniture positions live in `ROOM` in `src/game/world/layout.js`.

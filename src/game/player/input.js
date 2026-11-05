@@ -1,3 +1,6 @@
+import { player } from './playerState'
+import { sleep } from '../sleep'
+import { HOUSE } from '../world/layout'
 import { useGameStore } from '../../store/useGameStore'
 
 const keys = new Set()
@@ -25,7 +28,10 @@ export function readMove() {
 
 export function interact() {
   const { nearby, panel, openPanel } = useGameStore.getState()
-  if (nearby && !panel) openPanel(nearby.panel)
+  if (!nearby || panel || player.sleeping) return
+  if (nearby.action === 'sleep') sleep()
+  else if (nearby.action === 'enter') player.teleport = { x: HOUSE.x + 2.4, z: HOUSE.z }
+  else openPanel(nearby.panel)
 }
 
 export function attachKeyboard() {

@@ -159,7 +159,9 @@ export function updateEnvironment(dt) {
 
   env.cloudColor.copy(world.uHorizon.value).lerp(grey.setRGB(1, 0.98, 0.95), 0.55 * (1 - night)).multiplyScalar(1 - env.cloud * 0.42 - night * 0.4)
 
-  setAmbience({ wind: env.wind, rain: env.rain, night: night * (1 - env.rain) })
+  // Light rain drops away faster than it falls, so the sound ends with the last visible streaks.
+  const rainHeard = env.rain * Math.min(1, env.rain * 2.5)
+  setAmbience({ wind: env.wind, rain: rainHeard, night: night * (1 - env.rain) })
   publishClock()
 }
 

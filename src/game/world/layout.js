@@ -80,7 +80,12 @@ export const LANTERNS = PATHS.slice(3).flatMap((p) => p.points
   .map((pt, i) => [pt.x + (i % 2 ? 2.6 : -2.6), pt.z + (i % 2 ? -1 : 1)]))
 
 // The house door faces east, toward the path from the plaza.
-export const HOUSE = { x: -40, z: 3, doorX: -36, doorZ: 3 }
+export const HOUSE = { x: -40, z: 3, doorX: -36, doorZ: 3, halfW: 4, halfD: 3.5 }
+export const insideHouse = (x, z, margin = 0) => Math.abs(x - HOUSE.x) < HOUSE.halfW + margin && Math.abs(z - HOUSE.z) < HOUSE.halfD + margin
+
+// Furniture, as [x, z] from the middle of the room.
+export const ROOM = { desk: [-3.3, 1], stool: [-2.5, 1], bed: [-1, -2.6], shelf: [0, 3.04], certificate: [-3.72, -1.5], plant: [-3.3, -2.9] }
+const inRoom = ([x, z]) => ({ x: HOUSE.x + x, z: HOUSE.z + z })
 
 // Pedestals sit on an arc around the gallery, opening west toward the plaza.
 export const pedestals = projects.map((project, i) => {
@@ -115,7 +120,11 @@ export const TOWER = { x: 3, z: -48 }
 
 // Everything the player can press E on.
 export const interactables = [
-  { id: 'about', x: HOUSE.doorX + 1.4, z: HOUSE.doorZ, radius: 3.6, prompt: 'Knock on the door', panel: { type: 'about' } },
+  { id: 'door', x: HOUSE.doorX + 1.8, z: HOUSE.doorZ, radius: 2.2, prompt: 'Go inside', action: 'enter' },
+  { id: 'about', ...inRoom([-2.1, 1]), radius: 1.7, prompt: 'Use the laptop', panel: { type: 'about' } },
+  { id: 'bed', ...inRoom([-1, -1.5]), radius: 1.5, prompt: 'Sleep until morning', action: 'sleep' },
+  { id: 'shelf', ...inRoom([0, 2.2]), radius: 1.5, prompt: 'Browse the bookshelf', panel: { type: 'skills' } },
+  { id: 'certificate', ...inRoom([-2.9, -1.2]), radius: 1.2, prompt: 'Read the certificate', panel: { type: 'education' } },
   ...pedestals.map(({ project, x, z }) => ({
     id: `project-${project.id}`, x, z, radius: 3.2, prompt: `View ${project.title}`, panel: { type: 'project', id: project.id },
   })),

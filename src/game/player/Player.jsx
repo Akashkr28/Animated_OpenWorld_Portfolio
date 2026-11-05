@@ -9,7 +9,7 @@ import Wake from './Wake'
 import { attachKeyboard, input, readMove } from './input'
 import { camera, player } from './playerState'
 import { heightAt, isWalkable, waterLevelAt } from '../world/heightfield'
-import { SPAWN } from '../world/layout'
+import { HOUSE, insideHouse, ROOM, SPAWN } from '../world/layout'
 import { useGameStore } from '../../store/useGameStore'
 import { robot, setAmbience } from '../../lib/audio'
 
@@ -23,6 +23,12 @@ const MUTTER_RANGE = 12
 const CAPSULE_HALF = 0.55
 const CAPSULE_RADIUS = 0.35
 const FOOT_OFFSET = CAPSULE_HALF + CAPSULE_RADIUS
+
+// Lying on the bed: on his back, with his head on the pillow to the west.
+const REST_POSE = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(
+  new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0),
+))
+const REST_OFFSET = { x: 0.95, y: 0.72 }
 
 const angleDelta = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from))
 
@@ -61,7 +67,7 @@ export default function Player() {
     const s = state.current
     const c = center.current
     const game = useGameStore.getState()
-    const paused = !!game.panel || game.fading
+    const paused = !!game.panel || game.fading || player.sleeping
 
     if (player.teleport) {
       const { x, z } = player.teleport
@@ -153,7 +159,12 @@ export default function Player() {
     s.lift += (depth - s.lift) * Math.min(1, dt * 6)
     visual.current.position.copy(player.position)
     visual.current.position.y += s.lift
-    visual.current.rotation.y = player.yaw
+    visual.current.rotation.set(0, player.yaw, 0)
+    if (player.sleeping) {
+      visual.current.position.set(HOUSE.x + ROOM.bed[0] + REST_OFFSET.x, heightAt(HOUSE.x, HOUSE.z) + REST_OFFSET.y, HOUSE.z + ROOM.bed[1])
+      visual.current.quaternion.copy(REST_POSE)
+    }
+    player.indoors = insideHouse(c.x, c.z)
 
     // Left alone, he mutters to himself now and then.
     s.idle = player.anim === 'idle' && !paused ? s.idle + dt : 0
@@ -164,7 +175,7 @@ export default function Player() {
     }
 
     // Footfalls are measured by distance, so dust and sound track the real stride.
-    setAmbience({ hover: 0.35 + Math.min(1, player.speed / RUN) * 0.65 })
+    setAmbience({ hover: player.sleeping ? 0 : 0.5 + Math.min(1, player.speed / RUN) * 0.5 })
     if (player.grounded && player.speed > 0.8) {
       s.stride += traveled
       if (s.stride > (player.anim === 'run' ? 1.9 : 1.15)) {

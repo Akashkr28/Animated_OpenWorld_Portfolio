@@ -2,13 +2,37 @@
 // The context is only created after the visitor unmutes.
 let ctx, master, noise, voice
 let lastChirp = 0
+let outdoors, outdoorsLevel
+let indoors = false
+let soundOn = false
+
+// A code edit during development reloads this file, and the old sounds would otherwise play on.
+if (import.meta.env.DEV) window.__islandAudio?.close()
+let rainRequested = false
+
+// Compressed audio gains silence at both ends, so the file carries spare audio there and only
+// the middle loops. Everything inside repeats every RAIN_LOOP seconds, so the seam is inaudible.
+const OPEN_AIR = 20000
+const THROUGH_WALLS = 650
+const RAIN_URL = '/sounds/rain-loop.m4a'
+const RAIN_MARGIN = 0.5
+const RAIN_LOOP = 24
 const bed = {} // gain nodes for wind, rain, water and night
 
 function start() {
   ctx = new (window.AudioContext || window.webkitAudioContext)()
+  if (import.meta.env.DEV) window.__islandAudio = ctx
+  document.addEventListener('visibilitychange', followTab)
   master = ctx.createGain()
   master.gain.value = 0
   master.connect(ctx.destination)
+
+  // Everything from outside runs through here, so the walls can muffle it.
+  outdoors = ctx.createBiquadFilter()
+  outdoors.type = 'lowpass'
+  outdoors.frequency.value = OPEN_AIR
+  outdoorsLevel = ctx.createGain()
+  outdoors.connect(outdoorsLevel).connect(master)
 
   // Warm pad: a slow suspended chord.
   const pad = ctx.createGain()
@@ -51,7 +75,7 @@ function start() {
   const swellDepth = ctx.createGain()
   swellDepth.gain.value = 0.02
   swell.connect(swellDepth).connect(surfGain.gain)
-  src.connect(surf).connect(surfGain).connect(master)
+  src.connect(surf).connect(surfGain).connect(outdoors)
   src.start()
   swell.start()
 
@@ -65,45 +89,43 @@ function start() {
     const s = ctx.createBufferSource()
     s.buffer = noise
     s.loop = true
-    s.connect(f).connect(g).connect(master)
+    s.connect(f).connect(g).connect(outdoors)
     s.start()
     bed[name] = { gain: g, filter: f }
   }
   layer('wind', 'bandpass', 420, 1.1)
-  layer('rain', 'highpass', 1800)
+
+  const rainGain = ctx.createGain()
+  rainGain.gain.value = 0
+  rainGain.connect(outdoors)
+  bed.rain = { gain: rainGain }
+
   layer('water', 'bandpass', 900, 0.5)
 
-  // The robot's thrusters: a low hum, a turbine whine that climbs with speed, and a jet hiss.
+  // The robot floating: a soft force field that throbs slowly, and quickens as he moves.
+  // Two clean tones a fifth apart, kept away from the low notes that sound like a motor.
   const hover = ctx.createGain()
   hover.gain.value = 0
   hover.connect(master)
-  const hum = ctx.createOscillator()
-  hum.type = 'triangle'
-  hum.frequency.value = 118
-  hum.connect(hover)
-  hum.start()
-  const turbine = ctx.createOscillator()
-  turbine.type = 'sawtooth'
-  turbine.frequency.value = 300
-  const turbineTone = ctx.createBiquadFilter()
-  turbineTone.type = 'lowpass'
-  turbineTone.frequency.value = 900
-  const turbineGain = ctx.createGain()
-  turbineGain.gain.value = 0.16
-  turbine.connect(turbineTone).connect(turbineGain).connect(hover)
-  turbine.start()
-  const jet = ctx.createBufferSource()
-  jet.buffer = noise
-  jet.loop = true
-  const jetTone = ctx.createBiquadFilter()
-  jetTone.type = 'bandpass'
-  jetTone.frequency.value = 2600
-  jetTone.Q.value = 0.8
-  const jetGain = ctx.createGain()
-  jetGain.gain.value = 0.3
-  jet.connect(jetTone).connect(jetGain).connect(hover)
-  jet.start()
-  bed.hover = { gain: hover, pitch: hum.frequency, whine: turbine.frequency }
+  const field = ctx.createOscillator()
+  field.frequency.value = 330
+  const fieldGain = ctx.createGain()
+  fieldGain.gain.value = 0.07
+  const throb = ctx.createOscillator()
+  throb.frequency.value = 0.9
+  const throbDepth = ctx.createGain()
+  throbDepth.gain.value = 0.06
+  throb.connect(throbDepth).connect(fieldGain.gain)
+  field.connect(fieldGain).connect(hover)
+  const fifth = ctx.createOscillator()
+  fifth.frequency.value = 495
+  const fifthGain = ctx.createGain()
+  fifthGain.gain.value = 0.025
+  fifth.connect(fifthGain).connect(hover)
+  field.start()
+  fifth.start()
+  throb.start()
+  bed.hover = { gain: hover, rate: throb.frequency }
 
   // His voice runs through a soft lowpass and a short echo, so the beeps sound like a small metal body.
   voice = ctx.createBiquadFilter()
@@ -132,25 +154,55 @@ function start() {
   chop.connect(chopGain).connect(pulse.gain)
   const night = ctx.createGain()
   night.gain.value = 0
-  cricket.connect(pulse).connect(night).connect(master)
+  cricket.connect(pulse).connect(night).connect(outdoors)
   cricket.start()
   chop.start()
   bed.night = { gain: night }
 }
 
-const LEVELS = { wind: 0.16, rain: 0.09, water: 0.11, night: 0.008, hover: 0.1 }
+const LEVELS = { wind: 0.16, rain: 1.25, water: 0.11, night: 0.008, hover: 0.7 }
 
 // Called every frame, so it only touches the layers that are passed in.
 export function setAmbience(levels) {
   if (!ctx || ctx.state !== 'running') return
   for (const name in levels) {
     bed[name].gain.gain.setTargetAtTime(levels[name] * LEVELS[name], ctx.currentTime, 0.4)
-    if (name === 'hover') {
-      bed.hover.pitch.setTargetAtTime(95 + levels.hover * 70, ctx.currentTime, 0.2)
-      bed.hover.whine.setTargetAtTime(190 + levels.hover * 420, ctx.currentTime, 0.25)
-    }
+    if (name === 'hover') bed.hover.rate.setTargetAtTime(0.9 + (levels.hover - 0.5) * 3.2, ctx.currentTime, 0.4)
+    if (name === 'rain' && levels.rain > 0.02) loadRain()
     if (name === 'wind') bed.wind.filter.frequency.setTargetAtTime(300 + levels.wind * 560, ctx.currentTime, 0.5)
   }
+}
+
+// Fetched the first time it rains, so clear-weather visitors never download it.
+async function loadRain() {
+  if (rainRequested) return
+  rainRequested = true
+  try {
+    const res = await fetch(RAIN_URL)
+    const rain = ctx.createBufferSource()
+    rain.buffer = await ctx.decodeAudioData(await res.arrayBuffer())
+    rain.loop = true
+    rain.loopStart = RAIN_MARGIN
+    rain.loopEnd = RAIN_MARGIN + RAIN_LOOP
+    rain.connect(bed.rain.gain)
+    rain.start(0, RAIN_MARGIN)
+  } catch {
+    rainRequested = false // try again next time it rains
+  }
+}
+
+// Levels only update while the island is drawing, so a hidden tab must pause or they stick.
+function followTab() {
+  if (document.hidden) ctx.suspend()
+  else if (soundOn) ctx.resume()
+}
+
+export function setIndoors(on) {
+  if (on === indoors) return
+  indoors = on
+  if (!ctx) return
+  outdoors.frequency.setTargetAtTime(on ? THROUGH_WALLS : OPEN_AIR, ctx.currentTime, 0.18)
+  outdoorsLevel.gain.setTargetAtTime(on ? 0.6 : 1, ctx.currentTime, 0.18)
 }
 
 export function thunder() {
@@ -166,7 +218,7 @@ export function thunder() {
   f.frequency.value = 170
   const g = ctx.createGain()
   g.gain.value = 1.1
-  src.connect(f).connect(g).connect(master)
+  src.connect(f).connect(g).connect(outdoors)
   src.start()
 }
 
@@ -175,7 +227,8 @@ export function setMuted(muted) {
     if (muted) return
     start()
   }
-  ctx.resume()
+  soundOn = !muted
+  if (!document.hidden) ctx.resume()
   master.gain.setTargetAtTime(muted ? 0 : 0.9, ctx.currentTime, 0.25)
 }
 
@@ -196,6 +249,7 @@ function tone(freq, at, length, volume, type = 'sine') {
 const SFX = {
   open: () => { tone(523, 0, 0.16, 0.12); tone(784, 0.07, 0.22, 0.1) },
   close: () => tone(392, 0, 0.14, 0.08),
+  door: () => { tone(196, 0, 0.16, 0.09, 'triangle'); tone(147, 0.08, 0.2, 0.07, 'triangle') },
   reveal: () => { tone(659, 0, 0.3, 0.09); tone(988, 0.1, 0.4, 0.07) },
   achievement: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.5, 0.1)),
 }
@@ -281,9 +335,15 @@ const PHRASES = {
     blip(240, 190, 0.54, 0.09, 0.05)
     blip(240, 170, 0.67, 0.14, 0.05)
   },
+  snore: () => {
+    for (let i = 0; i < 3; i++) {
+      blip(190, 120, i * 1.25, 0.7, 0.02, 'triangle')
+      blip(420, 560, i * 1.25 + 0.75, 0.16, 0.012, 'sine')
+    }
+  },
   boost: () => {
-    whoosh(500, 3200, 0.34, 0.6)
-    blip(170, 640, 0, 0.26, 0.09, 'sine')
+    whoosh(380, 1500, 0.38, 0.4)
+    blip(420, 880, 0, 0.24, 0.05, 'sine')
   },
   land: () => {
     blip(190, 70, 0, 0.13, 0.12, 'sine')

@@ -3,17 +3,21 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import SharedShader from './SharedShader'
 import { env } from './environment'
-import { LANDMARKS, LANTERNS, PLAZA_LAMPS, landmark } from './layout'
+import { HOUSE, insideHouse, LANDMARKS, LANTERNS, PLAZA_LAMPS, landmark } from './layout'
 import { heightAt, mulberry32 } from './heightfield'
 import { world } from './uniforms'
 import { player } from '../player/playerState'
 
 const RAIN_BOX = 46
+const EAVES = 0.7 // rain and ripples stop this far out from the walls
+const HOUSE_BOUNDS = new THREE.Vector4(
+  HOUSE.x - HOUSE.halfW - EAVES, HOUSE.z - HOUSE.halfD - EAVES, HOUSE.x + HOUSE.halfW + EAVES, HOUSE.z + HOUSE.halfD + EAVES,
+)
 
 function Rain({ count }) {
   const mesh = useRef()
   const uniforms = useMemo(() => ({
-    uTime: world.uTime, uRain: world.uRain, uWind: world.uWind, uWindDir: world.uWindDir, uCenter: { value: new THREE.Vector3() }, uNight: world.uNight,
+    uTime: world.uTime, uRain: world.uRain, uWind: world.uWind, uWindDir: world.uWindDir, uCenter: { value: new THREE.Vector3() }, uNight: world.uNight, uHouse: { value: HOUSE_BOUNDS },
   }), [])
   const geometry = useMemo(() => {
     const rand = mulberry32(3)
@@ -49,6 +53,7 @@ function Rain({ count }) {
           uniform float uTime, uWind;
           uniform vec2 uWindDir;
           uniform vec3 uCenter;
+          uniform vec4 uHouse;
           attribute vec3 aSeed;
           attribute vec2 aCorner;
           varying float vTail;
@@ -60,12 +65,19 @@ function Rain({ count }) {
             // Wraps every drop into a box that travels with the player.
             p = mod(p - uCenter, box) - box * 0.5 + uCenter + vec3(0.0, 10.0, 0.0);
 
+            // The roof keeps the rain out of the house.
+            if (p.x > uHouse.x && p.x < uHouse.z && p.z > uHouse.y && p.z < uHouse.w) {
+              vTail = 0.0;
+              gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+              return;
+            }
+
             // A thin ribbon between head and tail, widened in screen space.
             vec4 head = projectionMatrix * viewMatrix * vec4(p, 1.0);
-            vec4 tail = projectionMatrix * viewMatrix * vec4(p - velocity * 0.03, 1.0);
+            vec4 tail = projectionMatrix * viewMatrix * vec4(p - velocity * 0.045, 1.0);
             vec2 dir = normalize(tail.xy / max(tail.w, 0.01) - head.xy / max(head.w, 0.01) + 0.0001);
             vec4 at = mix(head, tail, aCorner.y);
-            at.xy += vec2(-dir.y, dir.x) * aCorner.x * 0.0022 * at.w;
+            at.xy += vec2(-dir.y, dir.x) * aCorner.x * 0.0025 * at.w;
             vTail = aCorner.y;
             gl_Position = at;
           }`}
@@ -73,7 +85,7 @@ function Rain({ count }) {
           uniform float uRain, uNight;
           varying float vTail;
           void main() {
-            gl_FragColor = vec4(vec3(0.84, 0.89, 0.98) * (1.0 - uNight * 0.5), (0.5 - vTail * 0.38) * min(uRain * 1.6, 1.0));
+            gl_FragColor = vec4(vec3(0.86, 0.91, 1.0) * (1.0 - uNight * 0.3), (0.68 - vTail * 0.54) * min(uRain * 1.6, 1.0));
           }`}
       />
     </mesh>
@@ -82,7 +94,7 @@ function Rain({ count }) {
 
 const dummy = new THREE.Object3D()
 
-function Splashes({ count = 46 }) {
+function Splashes({ count = 110 }) {
   const mesh = useRef()
   const drops = useMemo(() => Array.from({ length: count }, () => ({ x: 0, y: -50, z: 0, age: 1, life: 0.4 })), [count])
 
@@ -91,10 +103,10 @@ function Splashes({ count = 46 }) {
     if (!mesh.current.visible) return
     drops.forEach((d, i) => {
       d.age += dt / d.life
-      if (d.age >= 1 && Math.random() < env.rain * 0.6) {
+      if (d.age >= 1 && Math.random() < env.rain * 0.85) {
         d.x = player.position.x + (Math.random() - 0.5) * 34
         d.z = player.position.z + (Math.random() - 0.5) * 34
-        d.y = Math.max(heightAt(d.x, d.z), 0) + 0.06
+        d.y = insideHouse(d.x, d.z, EAVES) ? -50 : Math.max(heightAt(d.x, d.z), 0) + 0.06
         d.age = 0
         d.life = 0.26 + Math.random() * 0.2
       }
@@ -374,7 +386,7 @@ function Fireflies({ count = 160 }) {
 export default function Weather({ detail }) {
   return (
     <>
-      <Rain count={detail ? 2400 : 1100} />
+      <Rain count={detail ? 6500 : 2600} />
       <Splashes />
       <Lightning />
       <WindParticles count={detail ? 110 : 60} />

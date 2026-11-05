@@ -4,7 +4,7 @@ import { player } from './player/playerState'
 import { interactables, LANDMARKS, stones, ZONES } from './world/layout'
 import { distToRiver } from './world/heightfield'
 import { discoveries } from '../data/portfolio'
-import { setAmbience } from '../lib/audio'
+import { setAmbience, setIndoors } from '../lib/audio'
 import { useGameStore } from '../store/useGameStore'
 
 const REVEAL_RADIUS = 3.8
@@ -27,7 +27,7 @@ export default function Systems() {
       const d = Math.hypot(item.x - x, item.z - z)
       if (d < item.radius && d < best) { best = d; nearest = item }
     }
-    game.setNearby(nearest)
+    game.setNearby(player.sleeping ? null : nearest)
 
     if (game.tutorialDone) {
       for (const id in ZONES) {
@@ -42,6 +42,7 @@ export default function Systems() {
         game.discover(l.id, title, text, LANDMARKS.length)
       }
     }
+    setIndoors(player.indoors)
     setAmbience({ water: 1 - Math.min(1, Math.max(0, distToRiver(x, z)) / 30) })
 
     for (const stone of stones) {
