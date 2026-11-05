@@ -11,13 +11,15 @@ import { camera, player } from './playerState'
 import { heightAt, isWalkable, waterLevelAt } from '../world/heightfield'
 import { SPAWN } from '../world/layout'
 import { useGameStore } from '../../store/useGameStore'
-import { setAmbience } from '../../lib/audio'
+import { robot, setAmbience } from '../../lib/audio'
 
 const WALK = 3.8
 const RUN = 7.2
 const GRAVITY = 26
 const JUMP = 9
 const COYOTE = 0.12
+const MUTTER_MIN = 9
+const MUTTER_RANGE = 12
 const CAPSULE_HALF = 0.55
 const CAPSULE_RADIUS = 0.35
 const FOOT_OFFSET = CAPSULE_HALF + CAPSULE_RADIUS
@@ -30,7 +32,7 @@ export default function Player() {
   const collider = useRef()
   const visual = useRef()
   const controller = useRef()
-  const state = useRef({ vx: 0, vz: 0, vy: 0, airTime: 0, stride: 0, lift: 0, safe: new THREE.Vector3(SPAWN.x, 3, SPAWN.z) })
+  const state = useRef({ vx: 0, vz: 0, vy: 0, airTime: 0, stride: 0, lift: 0, idle: 0, nextMutter: MUTTER_MIN, safe: new THREE.Vector3(SPAWN.x, 3, SPAWN.z) })
   const dust = useRef()
   const wake = useRef()
   const center = useRef(new THREE.Vector3(SPAWN.x, heightAt(SPAWN.x, SPAWN.z) + FOOT_OFFSET + 0.05, SPAWN.z))
@@ -88,11 +90,14 @@ export default function Player() {
     s.vx += (dirX * top - s.vx) * grip
     s.vz += (dirZ * top - s.vz) * grip
 
-    if (player.grounded) s.airTime = 0
-    else s.airTime += dt
+    if (player.grounded) {
+      if (s.airTime > 0.3) robot('land')
+      s.airTime = 0
+    } else s.airTime += dt
     if (input.jumpQueued && !paused && s.airTime < COYOTE) {
       s.vy = JUMP
       s.airTime = COYOTE
+      robot('boost')
     }
     input.jumpQueued = false
     s.vy = player.grounded && s.vy <= 0 ? -1 : s.vy - GRAVITY * dt
@@ -122,6 +127,7 @@ export default function Player() {
     // Anything that does end up in deep water returns to the last solid footing.
     if (player.grounded && c.y - FOOT_OFFSET > -1.3) s.safe.copy(c)
     else if (c.y - FOOT_OFFSET < -1.6) {
+      robot('oops')
       c.copy(s.safe)
       body.current.setTranslation(c, true)
       s.vx = s.vz = s.vy = 0
@@ -148,6 +154,14 @@ export default function Player() {
     visual.current.position.copy(player.position)
     visual.current.position.y += s.lift
     visual.current.rotation.y = player.yaw
+
+    // Left alone, he mutters to himself now and then.
+    s.idle = player.anim === 'idle' && !paused ? s.idle + dt : 0
+    if (s.idle > s.nextMutter) {
+      robot('mutter')
+      s.idle = 0
+      s.nextMutter = MUTTER_MIN + Math.random() * MUTTER_RANGE
+    }
 
     // Footfalls are measured by distance, so dust and sound track the real stride.
     setAmbience({ hover: 0.35 + Math.min(1, player.speed / RUN) * 0.65 })

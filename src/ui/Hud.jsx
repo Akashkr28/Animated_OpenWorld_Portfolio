@@ -8,12 +8,13 @@ import { ResumeButton } from './panels/content'
 import { input, interact } from '../game/player/input'
 import { discoveries, milestones, profile, zoneText } from '../data/portfolio'
 import { setWeather, skipToTime, TIMES, WEATHER, WEATHER_ORDER } from '../game/world/environment'
-import { setMuted, sfx } from '../lib/audio'
+import { robot, setMuted, sfx } from '../lib/audio'
 import { useGameStore, ZONE_IDS } from '../store/useGameStore'
 
 const SCROLL_MS = 7000
 const QUEUED_SCROLL_MS = 4500 // long enough to read when another scroll is waiting
 const GREET_DELAY_MS = 900
+const SOUND_ON_HELLO_MS = 350 // lets the island fade in first
 const hudButton = 'glass rounded-full px-3.5 py-2 text-sm font-semibold hover:bg-night/80'
 
 function Tutorial({ touch }) {
@@ -257,12 +258,16 @@ export default function Hud({ touch }) {
 
   useEffect(() => useGameStore.subscribe((s, prev) => {
     if (!!s.panel !== !!prev.panel) sfx(s.panel ? 'open' : 'close')
+    if (s.greeting && !prev.greeting) robot('hello')
+    if (s.nearby && s.nearby.id !== prev.nearby?.id) robot('curious')
+    if (s.discovered !== prev.discovered || (s.achievement && !prev.achievement)) robot('happy')
   }), [])
 
   const openMap = () => useGameStore.getState().openPanel({ type: 'map' })
   const toggleMute = () => {
     setMuted(!muted)
     setMutedState(!muted)
+    if (muted) setTimeout(() => robot('hello'), SOUND_ON_HELLO_MS)
   }
 
   return (
