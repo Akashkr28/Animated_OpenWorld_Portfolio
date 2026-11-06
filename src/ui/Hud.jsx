@@ -4,16 +4,19 @@ import confetti from 'canvas-confetti'
 import Minimap from './Minimap'
 import Joystick from './Joystick'
 import PanelHost from './panels/PanelHost'
+import SignPrompt from './SignPrompt'
 import { ResumeButton } from './panels/content'
 import { input, interact } from '../game/player/input'
 import { discoveries, milestones, profile, zoneText } from '../data/portfolio'
 import { setWeather, skipToTime, TIMES, WEATHER, WEATHER_ORDER } from '../game/world/environment'
 import { robot, setMuted, sfx } from '../lib/audio'
+import { keepBotInPlace, startVisit } from '../lib/visitors'
 import { useGameStore, ZONE_IDS } from '../store/useGameStore'
 
 const SCROLL_MS = 7000
 const QUEUED_SCROLL_MS = 4500 // long enough to read when another scroll is waiting
 const GREET_DELAY_MS = 900
+const SIGN_DELAY_MS = 4000 // after the robot's hello
 const SOUND_ON_HELLO_MS = 350 // lets the island fade in first
 const hudButton = 'glass rounded-full px-3.5 py-2 text-sm font-semibold hover:bg-night/80'
 
@@ -278,6 +281,7 @@ export default function Hud({ touch }) {
   const muted = useGameStore((s) => s.muted)
   const fading = useGameStore((s) => s.fading)
   const greeting = useGameStore((s) => s.greeting)
+  const signPrompt = useGameStore((s) => s.signPrompt)
   const setMode = useGameStore((s) => s.setMode)
   const setMutedState = useGameStore((s) => s.setMuted)
 
@@ -287,6 +291,14 @@ export default function Hud({ touch }) {
     const id = setTimeout(() => useGameStore.getState().greet(), GREET_DELAY_MS)
     return () => clearTimeout(id)
   }, [ready])
+
+  useEffect(() => {
+    if (!ready) return
+    const id = setTimeout(startVisit, SIGN_DELAY_MS)
+    return () => clearTimeout(id)
+  }, [ready])
+
+  useEffect(keepBotInPlace, [])
 
   // The classic page has no sound button, and nothing updates the island's levels there.
   useEffect(() => () => {
@@ -349,7 +361,8 @@ export default function Hud({ touch }) {
           </div>
 
           <MilestoneScroll />
-          <Tutorial touch={touch} />
+          {!signPrompt && <Tutorial touch={touch} />}
+          <SignPrompt />
           <Prompt touch={touch} />
           <Toast />
           <p className="sr-only" role="status">{greeting && `${greeting.title} ${greeting.line}`}</p>

@@ -24,6 +24,7 @@ export default function Systems() {
 
     let nearest = null, best = Infinity
     for (const item of interactables) {
+      if (item.id === 'guestbook' && !game.guestbook) continue
       const d = Math.hypot(item.x - x, item.z - z)
       if (d < item.radius && d < best) { best = d; nearest = item }
     }

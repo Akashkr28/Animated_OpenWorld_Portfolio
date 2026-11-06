@@ -115,6 +115,7 @@ export const stones = milestones.map((milestone, i) => {
   }
 })
 
+export const GUESTBOOK = { x: 5.2, z: 8.4, yaw: -0.5 }
 export const MAILBOX = { x: -2.4, z: -41.5 }
 export const TOWER = { x: 3, z: -48 }
 
@@ -128,5 +129,6 @@ export const interactables = [
   ...pedestals.map(({ project, x, z }) => ({
     id: `project-${project.id}`, x, z, radius: 3.2, prompt: `View ${project.title}`, panel: { type: 'project', id: project.id },
   })),
+  { id: 'guestbook', x: GUESTBOOK.x - 0.6, z: GUESTBOOK.z + 1.6, radius: 3, prompt: 'Read the guestbook', panel: { type: 'guestbook' } },
   { id: 'contact', x: MAILBOX.x, z: MAILBOX.z, radius: 3.4, prompt: 'Open the mailbox', panel: { type: 'contact' } },
 ]

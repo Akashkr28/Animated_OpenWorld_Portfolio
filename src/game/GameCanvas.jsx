@@ -12,6 +12,8 @@ import Scatter from './world/Scatter'
 import SkyLife from './world/SkyLife'
 import River from './world/River'
 import Weather from './world/Weather'
+import Guestbook from './zones/Guestbook'
+import VisitorBots from './zones/VisitorBots'
 import { env, setWeather, skipToTime } from './world/environment'
 import Landmarks from './zones/Landmarks'
 import SpawnPlaza from './zones/SpawnPlaza'
@@ -95,6 +97,8 @@ export default function GameCanvas() {
             <Weather detail={!touch} />
             <Landmarks />
             <SpawnPlaza />
+            <Guestbook />
+            <VisitorBots />
             <AboutHouse />
             <ProjectsGallery />
             <JourneyPath />

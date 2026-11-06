@@ -1,5 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import Panel from '../Panel'
+import GuestbookPage from './GuestbookPage'
 import WorldMap from './WorldMap'
 import { Bio, ContactForm, ContactLinks, Education, ProjectCard, ResumeButton, Skills } from './content'
 import { profile, projects } from '../../data/portfolio'
@@ -39,6 +40,13 @@ function Body({ panel, onClose }) {
     return (
       <Panel eyebrow="On the wall" title="Education and certification" onClose={onClose}>
         <Education />
+      </Panel>
+    )
+  }
+  if (panel.type === 'guestbook') {
+    return (
+      <Panel eyebrow="Everyone who has washed ashore" title="Island guestbook" onClose={onClose}>
+        <GuestbookPage />
       </Panel>
     )
   }

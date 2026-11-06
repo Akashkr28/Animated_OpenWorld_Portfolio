@@ -139,3 +139,17 @@ The About zone is a real room. The door opens as you approach, and the door wall
 - Certificate: education and certification.
 
 Furniture positions live in `ROOM` in `src/game/world/layout.js`.
+
+## Visitor bots and the guestbook
+
+Visitors can leave their name when they arrive. Their bot stays where they last stood for 24 hours, and their name stays on the board by the plaza for good. The board also counts everyone who visited, signed or not.
+
+This needs a database. On Vercel, connect Upstash Redis in the Storage tab, which sets the environment variables. Until then the feature hides itself in production. During local development it uses memory, which empties when the dev server restarts.
+
+No IP addresses are stored, and browsers are only known by a random id. Names are filtered in `api/_lib/names.js`, but no filter is perfect, so check the board now and then.
+
+To remove a name, set `VISITORS_ADMIN_KEY` in Vercel, then run:
+
+```bash
+curl -X DELETE https://your-site.vercel.app/api/visitors -H "x-admin-key: YOUR_KEY" -d '{"name":"The name"}'
+```

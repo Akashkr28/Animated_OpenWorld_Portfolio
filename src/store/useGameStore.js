@@ -25,6 +25,9 @@ export const useGameStore = create((set, get) => ({
   discovered: {},
   greeting: null, // { title, line, until } while the character is waving
   toast: null, // { id, title, text }
+  guestbook: null, // { total, signed, names, bots } once the server has answered
+  signer: null, // { name, tag } after this visitor has signed
+  signPrompt: false,
   weather: 'clear',
   clock: '--:--',
   phase: '',
