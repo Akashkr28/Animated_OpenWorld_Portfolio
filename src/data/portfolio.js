@@ -46,8 +46,8 @@ export const projects = [
     summary: 'Real-time grid of 1 million checkboxes',
     description: 'A real-time grid of 1 million checkboxes that many users can toggle at once. State lives in a Redis bitfield, so the whole grid fits in about 125 KB, and updates go out over WebSockets with Redis Pub/Sub.',
     tech: ['Node', 'Express', 'WebSockets', 'Redis', 'OAuth 2.0'],
-    image: '/projects/checkgrid.svg',
-    imageAlt: 'Illustration of a dense checkbox grid with some boxes ticked',
+    image: '/projects/checkgrid.webp',
+    imageAlt: 'CheckGrid home page with the headline One grid. Many users. Every checkbox moves live.',
     github: 'https://github.com/Akashkr28/1-million-checkboxes',
     demo: 'https://million-checkboxes-xtg8.onrender.com/',
     color: '#ff7a59',
@@ -58,8 +58,8 @@ export const projects = [
     summary: 'Voice AI assistant portfolio page',
     description: 'A full-fledged voice AI assistant portfolio page. D.I.K.S.H.A (Digital Intelligence for Knowledge, Speech & Human Assistance) guides visitors through my work out loud, and they can talk to it to ask about me and my projects.',
     tech: ['Next.js', 'TypeScript', 'Three.js', 'Claude API', 'ElevenLabs'],
-    image: '/projects/diksha.svg',
-    imageAlt: 'Illustration of a voice waveform',
+    image: '/projects/diksha.webp',
+    imageAlt: 'D.I.K.S.H.A speaking, with a glowing particle orb above her words',
     github: 'https://github.com/Akashkr28/D.I.K.S.H.A',
     demo: 'https://akash-portfolio-eta-snowy.vercel.app',
     color: '#2fb7a8',
@@ -82,8 +82,8 @@ export const projects = [
     summary: 'Cyber health dashboard for factories',
     description: 'A traffic-light cyber health dashboard for small and medium factories. A passive gateway on a Raspberry Pi or old PC watches the plant network and machine logs, and Sentinel turns each finding into a green, amber or red alert card with a 3-step script in Hindi, Marathi, Tamil or English. It messages the owner on WhatsApp or SMS, instantly for red alerts. Built for the TCS iON Hackathon.',
     tech: ['React', 'Node.js', 'Express', 'SQLite', 'Python', 'Claude API'],
-    image: '/projects/shopfloor-sentinel.svg',
-    imageAlt: 'Illustration of a traffic light beside a factory network',
+    image: '/projects/shopfloor-sentinel.webp',
+    imageAlt: 'Shopfloor Sentinel factory setup page beside sample alerts in English, Hindi and Tamil',
     github: 'https://github.com/Akashkr28/Shopfloor_Sentinel_Dashboard',
     demo: 'https://shopfloor-sentinel.fly.dev/setup-factory',
     color: '#ff5c8a',
@@ -107,6 +107,8 @@ export const contact = {
   github: 'https://github.com/Akashkr28',
   resume: '/resume/Akash_Kumar_Singh_Full_Stack_Resume.pdf',
 }
+
+export const credits = 'Rain sound by boons_freak.'
 
 // Hidden places in the wider world. Found by walking there.
 export const discoveries = {

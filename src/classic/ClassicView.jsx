@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Bio, ContactForm, ContactLinks, Education, ProjectCard, ResumeButton, Skills } from '../ui/panels/content'
+import { Bio, ContactForm, ContactLinks, Credits, Education, ProjectCard, ResumeButton, Skills } from '../ui/panels/content'
 import { milestones, profile, projects } from '../data/portfolio'
 import { timeGreeting } from '../lib/greeting'
 import { useGameStore } from '../store/useGameStore'
@@ -96,6 +96,7 @@ export default function ClassicView() {
           <ContactLinks />
           <div className="mt-3"><ResumeButton /></div>
           <div className="mt-6"><ContactForm /></div>
+          <Credits />
         </Section>
       </main>
     </div>

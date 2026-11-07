@@ -1,7 +1,7 @@
 // Content blocks shared by the island panels and the classic page.
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { certifications, contact, education, profile, skills } from '../../data/portfolio'
+import { certifications, contact, credits, education, profile, skills } from '../../data/portfolio'
 import { hasEmailJs, sendMessage } from '../../lib/contact'
 
 export function Bio() {
@@ -56,6 +56,10 @@ export function ResumeButton({ label = 'Download resume', className = `${linkCla
       {label} <span aria-hidden="true">↓</span>
     </a>
   )
+}
+
+export function Credits() {
+  return <p className="mt-6 text-xs text-cream/60">{credits}</p>
 }
 
 export function ProjectCard({ project }) {

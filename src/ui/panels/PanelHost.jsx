@@ -2,7 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import Panel from '../Panel'
 import GuestbookPage from './GuestbookPage'
 import WorldMap from './WorldMap'
-import { Bio, ContactForm, ContactLinks, Education, ProjectCard, ResumeButton, Skills } from './content'
+import { Bio, ContactForm, ContactLinks, Credits, Education, ProjectCard, ResumeButton, Skills } from './content'
 import { profile, projects } from '../../data/portfolio'
 import { timeGreeting } from '../../lib/greeting'
 import { useGameStore } from '../../store/useGameStore'
@@ -64,6 +64,7 @@ function Body({ panel, onClose }) {
       <div className="mt-3"><ResumeButton /></div>
       <h3 className={heading}>Send a message</h3>
       <ContactForm />
+      <Credits />
     </Panel>
   )
 }
