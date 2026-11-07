@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useRapier } from '@react-three/rapier'
 import * as THREE from 'three'
 import { camera as cameraState, player } from './playerState'
+import { arrival } from '../Arrival'
 import { heightAt } from '../world/heightfield'
 import { HOUSE } from '../world/layout'
 import { world as shared } from '../world/uniforms'
@@ -123,6 +124,10 @@ export default function FollowCamera() {
     if (o.indoor > 0.001) {
       three.position.lerp(scratch.set(INDOOR_X, heightAt(HOUSE.x, HOUSE.z) + INDOOR_HEIGHT, HOUSE.z + (z - HOUSE.z) * INDOOR_TRACK), o.indoor)
       lookAt.lerp(scratch.set(Math.min(x, INDOOR_LOOK_X), y + 0.9, z), o.indoor)
+    }
+    if (arrival.active) {
+      three.position.lerp(arrival.camera, arrival.blend)
+      lookAt.lerp(arrival.look, arrival.blend)
     }
     three.lookAt(lookAt)
   })

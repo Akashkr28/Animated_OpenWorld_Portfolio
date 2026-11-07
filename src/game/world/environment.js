@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { world } from './uniforms'
+import { arrival } from '../Arrival'
 import { useGameStore } from '../../store/useGameStore'
 import { prefersReducedMotion } from '../../lib/device'
 import { setAmbience, thunder } from '../../lib/audio'
@@ -154,8 +155,10 @@ export function updateEnvironment(dt) {
   world.uWind.value = env.wind
   world.uWindDir.value.set(Math.cos(env.windAngle), Math.sin(env.windAngle))
   world.uFlash.value = env.flash
-  world.uFogNear.value = 90 - env.fog * 78
-  world.uFogFar.value = 430 - env.fog * 335
+  // The arrival looks down from high up, so the haze lifts until the robot lands.
+  const clearAir = arrival.active ? arrival.blend : 0
+  world.uFogNear.value = 90 - env.fog * 78 + clearAir * 420
+  world.uFogFar.value = 430 - env.fog * 335 + clearAir * 1200
 
   env.cloudColor.copy(world.uHorizon.value).lerp(grey.setRGB(1, 0.98, 0.95), 0.55 * (1 - night)).multiplyScalar(1 - env.cloud * 0.42 - night * 0.4)
 

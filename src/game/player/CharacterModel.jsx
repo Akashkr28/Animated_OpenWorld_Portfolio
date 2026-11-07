@@ -4,6 +4,7 @@ import { useAnimations, useGLTF } from '@react-three/drei'
 import Greeting from './Greeting'
 import { character } from './characterConfig'
 import { player } from './playerState'
+import { arrival } from '../Arrival'
 
 const FADE = 0.22
 const WALK_SPEED = 3.8
@@ -30,6 +31,8 @@ export default function CharacterModel() {
       scene.getObjectByName('eyesOpen')?.scale.set(1, 0.08, 1)
       scene.getObjectByName('thrust')?.scale.setScalar(0.001)
     }
+
+    if (arrival.active) scene.getObjectByName('thrust')?.scale.setScalar(1 + arrival.boost)
 
     const next = actions[character.clips[player.anim]] ?? actions[character.clips.idle]
     if (!next) return

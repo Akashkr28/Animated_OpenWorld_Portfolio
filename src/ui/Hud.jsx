@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import confetti from 'canvas-confetti'
+import ArrivalOverlay from './ArrivalOverlay'
 import Minimap from './Minimap'
 import Joystick from './Joystick'
 import PanelHost from './panels/PanelHost'
@@ -15,7 +16,7 @@ import { useGameStore, ZONE_IDS } from '../store/useGameStore'
 
 const SCROLL_MS = 7000
 const QUEUED_SCROLL_MS = 4500 // long enough to read when another scroll is waiting
-const GREET_DELAY_MS = 900
+const GREET_DELAY_MS = 500
 const SIGN_DELAY_MS = 4000 // after the robot's hello
 const SOUND_ON_HELLO_MS = 350 // lets the island fade in first
 const hudButton = 'glass rounded-full px-3.5 py-2 text-sm font-semibold hover:bg-night/80'
@@ -278,6 +279,7 @@ function Achievement() {
 
 export default function Hud({ touch }) {
   const ready = useGameStore((s) => s.ready)
+  const arriving = useGameStore((s) => s.arriving)
   const muted = useGameStore((s) => s.muted)
   const fading = useGameStore((s) => s.fading)
   const greeting = useGameStore((s) => s.greeting)
@@ -285,18 +287,18 @@ export default function Hud({ touch }) {
   const setMode = useGameStore((s) => s.setMode)
   const setMutedState = useGameStore((s) => s.setMuted)
 
-  // Greets once the loading screen has lifted.
+  // Greets once the loading screen has lifted and the robot has landed.
   useEffect(() => {
-    if (!ready) return
+    if (!ready || arriving) return
     const id = setTimeout(() => useGameStore.getState().greet(), GREET_DELAY_MS)
     return () => clearTimeout(id)
-  }, [ready])
+  }, [ready, arriving])
 
   useEffect(() => {
-    if (!ready) return
+    if (!ready || arriving) return
     const id = setTimeout(startVisit, SIGN_DELAY_MS)
     return () => clearTimeout(id)
-  }, [ready])
+  }, [ready, arriving])
 
   useEffect(keepBotInPlace, [])
 
@@ -326,8 +328,12 @@ export default function Hud({ touch }) {
         className="pointer-events-none fixed inset-0 z-20 bg-night"
         initial={false} animate={{ opacity: fading ? 1 : 0 }} transition={{ duration: 0.24 }}
       />
-      {ready && (
-        <div className="pointer-events-none fixed inset-0 z-10 select-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
+      {ready && arriving && <ArrivalOverlay />}
+      {ready && !arriving && (
+        <motion.div
+          className="pointer-events-none fixed inset-0 z-10 select-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+        >
           <div className="absolute top-3 left-3 flex flex-col items-start gap-2 sm:top-4 sm:left-4">
             <div className="glass rounded-2xl px-3.5 py-2">
               <h1 className="font-display text-sm leading-tight font-bold sm:text-base">{profile.name}</h1>
@@ -377,7 +383,7 @@ export default function Hud({ touch }) {
               </div>
             </>
           )}
-        </div>
+        </motion.div>
       )}
       <PanelHost />
     </>

@@ -8,6 +8,7 @@ import BlobShadow from './BlobShadow'
 import Wake from './Wake'
 import { attachKeyboard, input, readMove } from './input'
 import { camera, player } from './playerState'
+import { arrival } from '../Arrival'
 import { heightAt, isWalkable, waterLevelAt } from '../world/heightfield'
 import { HOUSE, insideHouse, ROOM, SPAWN } from '../world/layout'
 import { useGameStore } from '../../store/useGameStore'
@@ -67,7 +68,7 @@ export default function Player() {
     const s = state.current
     const c = center.current
     const game = useGameStore.getState()
-    const paused = !!game.panel || game.fading || player.sleeping
+    const paused = !!game.panel || game.fading || player.sleeping || arrival.active
 
     if (player.teleport) {
       const { x, z } = player.teleport
@@ -160,6 +161,17 @@ export default function Player() {
     visual.current.position.copy(player.position)
     visual.current.position.y += s.lift
     visual.current.rotation.set(0, player.yaw, 0)
+    if (arrival.active) {
+      // Only the model flies. The real position waits on the plaza, so grass grows there first.
+      visual.current.position.add(arrival.offset)
+      visual.current.rotation.set(arrival.tilt, player.yaw, 0, 'YXZ')
+      if (arrival.offset.y > 0.05) player.anim = 'jump'
+      if (arrival.landed) {
+        arrival.landed = false
+        robot('land')
+        dust.current?.puff(player.position, 24)
+      }
+    }
     if (player.sleeping) {
       visual.current.position.set(HOUSE.x + ROOM.bed[0] + REST_OFFSET.x, heightAt(HOUSE.x, HOUSE.z) + REST_OFFSET.y, HOUSE.z + ROOM.bed[1])
       visual.current.quaternion.copy(REST_POSE)

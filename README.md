@@ -39,6 +39,7 @@ Everything visitors read is in [`src/data/portfolio.js`](src/data/portfolio.js):
 
 Beyond the five portfolio zones there's a wider island with a mountain, a river and waterfall, trails, bridges and eight hidden places to discover.
 
+- **Arrival:** the first visit of the day opens with the robot falling through the sky like a comet and landing on the plaza. Any click, tap or key skips it, and it never plays with reduced motion on. Tune the flight paths and timing in `Arrival.jsx`.
 - **Greeting:** when the island opens, the robot turns to the visitor, waves with happy eyes and says a greeting for their local time. `G` waves again. Edit the wording in `greetings` in `portfolio.js`.
 - **Day and night:** the island starts at the visitor's real time of day, then one day lasts 6 minutes (`DAY_SECONDS` in `environment.js`). The sun and moon move across the sky, stars come out, lanterns light up, fireflies appear and the lighthouse beam switches on.
 - **Weather:** clear, cloudy, windy, rain, storm and fog change on their own every 1–2.5 minutes. Add or tune a state in `WEATHER` in `environment.js`. A rainbow can follow the rain, and storms bring lightning.

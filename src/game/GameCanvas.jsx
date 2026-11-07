@@ -8,6 +8,7 @@ import Terrain from './world/Terrain'
 import Water from './world/Water'
 import Sky from './world/Sky'
 import Lighting from './world/Lighting'
+import Arrival, { arrival, endArrival, prepareArrival } from './Arrival'
 import Grass from './world/Grass'
 import Scatter from './world/Scatter'
 import SkyLife from './world/SkyLife'
@@ -40,7 +41,7 @@ await Promise.race([
 
 useGameStore.setState({ loadProgress: 45 })
 
-if (import.meta.env.DEV) window.__island = { player, cameraRig, input, store: useGameStore, advance, env, setWeather, skipToTime }
+if (import.meta.env.DEV) window.__island = { player, cameraRig, input, store: useGameStore, advance, env, setWeather, skipToTime, arrival }
 
 // Waits for real rendered frames so the loading screen lifts onto a finished scene.
 function ReadySignal() {
@@ -65,6 +66,11 @@ export default function GameCanvas() {
   const [touch] = useState(isTouchDevice)
   const [dpr, setDpr] = useState(touch ? 1.25 : 1.5)
   const high = quality === 'high' && !touch
+
+  useEffect(() => {
+    prepareArrival()
+    return endArrival
+  }, [])
 
   return (
     <>
@@ -105,6 +111,7 @@ export default function GameCanvas() {
             <ProjectsGallery />
             <JourneyPath />
             <ContactTower />
+            <Arrival />
             <Player />
             <FollowCamera />
             <Systems />

@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { player } from './playerState'
+import { arrival } from '../Arrival'
 import { heightAt } from '../world/heightfield'
 
 export default function BlobShadow() {
@@ -22,7 +23,7 @@ export default function BlobShadow() {
     mesh.current.visible = !player.sleeping
     const { x, y, z } = player.position
     const ground = heightAt(x, z)
-    const lift = Math.min(1, Math.max(0, y - ground) / 3)
+    const lift = Math.min(1, Math.max(0, y + arrival.offset.y - ground) / 3)
     mesh.current.position.set(x, ground + 0.09, z)
     mesh.current.scale.setScalar(1.5 - lift * 0.6)
     mesh.current.material.opacity = 1 - lift * 0.65

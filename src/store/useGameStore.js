@@ -8,6 +8,7 @@ export const ZONE_IDS = ['spawn', 'about', 'projects', 'journey', 'contact']
 export const useGameStore = create((set, get) => ({
   mode: 'game', // 'game' | 'classic'
   ready: false,
+  arriving: false, // the robot is flying in, so the controls stay hidden
   loadProgress: 8,
   canRun3D: true,
   autoClassic: false,
