@@ -43,6 +43,8 @@ Beyond the five portfolio zones there's a wider island with a mountain, a river 
 - **Day and night:** the island starts at the visitor's real time of day, then one day lasts 6 minutes (`DAY_SECONDS` in `environment.js`). The sun and moon move across the sky, stars come out, lanterns light up, fireflies appear and the lighthouse beam switches on.
 - **Weather:** clear, cloudy, windy, rain, storm and fog change on their own every 1–2.5 minutes. Add or tune a state in `WEATHER` in `environment.js`. A rainbow can follow the rain, and storms bring lightning.
 - **Wind:** one wind value drives gusts rolling through trees and grass, drifting leaves, air streaks, flags, the windmill, cloud speed and wave height.
+- **Grass:** `Grass.jsx` grows a thick meadow only around the robot, reusing ground cells as it walks. Blades catch the same gusts as the trees and part around the robot. Density is set in `SIZES`, with a lighter version on phones and low quality.
+- **Trees:** trunks lean with gusts, branches swing on their own beat and leaves shiver (`addTreeSway` in `uniforms.js`). Sunlight glows through the leaves, and petals and leaves fall from the trees (`FallingLeaves.jsx`).
 - **Water:** the sea uses Gerstner waves with depth-based colour, sky reflections, sun glitter, caustics, whitecaps and shore foam. The river flows downhill along its bed, faster in mid-channel and white on the falls.
 - **Trees:** pines, oaks, cherry blossoms and palms are generated in `src/game/world/trees.js` from one painted texture atlas, so they add nothing to the download. Foliage between the camera and the character dissolves so the forest stays playable.
 - **HUD controls:** visitors can click the clock to skip through the day and click Weather to change it.

@@ -8,6 +8,7 @@ import Terrain from './world/Terrain'
 import Water from './world/Water'
 import Sky from './world/Sky'
 import Lighting from './world/Lighting'
+import Grass from './world/Grass'
 import Scatter from './world/Scatter'
 import SkyLife from './world/SkyLife'
 import River from './world/River'
@@ -93,6 +94,7 @@ export default function GameCanvas() {
             <River />
             <Terrain textureSize={touch ? 1024 : 2048} />
             <Scatter dense={!touch} />
+            <Grass dense={high} />
             <SkyLife />
             <Weather detail={!touch} />
             <Landmarks />

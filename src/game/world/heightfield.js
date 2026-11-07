@@ -180,6 +180,17 @@ function onWalkway(x, z) {
 // Wading is allowed up to about waist depth; deep sea is the edge of the world.
 export const isWalkable = (x, z) => heightAt(x, z) > -1 || onWalkway(x, z)
 
+// The ground's greens, shared with the grass so blades grow out of a matching colour.
+const MEADOW = [[0x7f, 0xb8, 0x5c], [0x8f, 0xc2, 0x62], [0x6d, 0xa9, 0x5e]]
+const FOREST = [0x4f, 0x8f, 0x58]
+export const meadowNoise = (x, z) => Math.sin(x * 0.31) * Math.cos(z * 0.27) + Math.sin(x * 0.11 + z * 0.13)
+export function meadowColor(x, z) {
+  const n = meadowNoise(x, z)
+  const green = n > 0.5 ? MEADOW[1] : n < -0.5 ? MEADOW[2] : MEADOW[0]
+  const forest = smoothstep(-55, -100, x) * 0.8
+  return green.map((v, i) => v + (FOREST[i] - v) * forest)
+}
+
 export function mulberry32(seed) {
   let a = seed
   return () => {

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { mulberry32 } from './heightfield'
-import { addSway, world } from './uniforms'
+import { addTreeSway, world } from './uniforms'
 
 // One painted atlas supplies every tree, so realistic foliage costs no image downloads.
 const TILE = 512
@@ -173,9 +173,10 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z)
 const UP = V(0, 1, 0)
 
 class TreeMesh {
-  positions = []; normals = []; colors = []; uvs = []; indices = []
+  positions = []; normals = []; colors = []; uvs = []; wind = []; indices = []
 
-  vertex(p, n, c, tile, s, t) {
+  vertex(p, n, c, tile, s, t, flex = 0, beat = -0.001) {
+    this.wind.push(flex, beat)
     this.positions.push(p.x, p.y, p.z)
     this.normals.push(n.x, n.y, n.z)
     this.colors.push(c.r, c.g, c.b)
@@ -183,7 +184,7 @@ class TreeMesh {
     return this.positions.length / 3 - 1
   }
 
-  tube(points, radii, color, sides = 7) {
+  tube(points, radii, color, sides = 7, flex = 0) {
     const start = this.positions.length / 3
     const across = V(1, 0, 0)
     points.forEach((p, i) => {
@@ -195,7 +196,7 @@ class TreeMesh {
         const n = a.clone().multiplyScalar(Math.cos(angle)).addScaledVector(b, Math.sin(angle))
         const s = Math.abs((k / sides) * 2 - 1) * 0.96 + 0.02 // mirrored, so the seam never shows
         const t = Math.abs(((p.y * 0.2) % 2) - 1) * 0.96 + 0.02
-        this.vertex(p.clone().addScaledVector(n, radii[i]), n, color, BARK, s, t)
+        this.vertex(p.clone().addScaledVector(n, radii[i]), n, color, BARK, s, t, flex)
       }
     })
     for (let i = 0; i < points.length - 1; i++) {
@@ -207,8 +208,9 @@ class TreeMesh {
   }
 
   // A bendable foliage card. Normals point away from `center`, so light wraps the crown like a solid mass.
-  card(origin, dir, side, length, width, tile, { droop = 0, segments = 1, center, near, far }) {
+  card(origin, dir, side, length, width, tile, { droop = 0, segments = 1, center, near, far, flex = [0, 1] }) {
     const start = this.positions.length / 3
+    const beat = Math.abs(Math.sin(origin.x * 12.9 + origin.y * 37.7 + origin.z * 78.2) * 43.758) % 1
     const color = new THREE.Color()
     for (let k = 0; k <= segments; k++) {
       const a = k / segments
@@ -217,7 +219,7 @@ class TreeMesh {
       for (const edge of [0, 1]) {
         const p = spine.clone().addScaledVector(side, (edge - 0.5) * width)
         const n = p.clone().sub(center).normalize().addScaledVector(UP, 0.35).normalize()
-        this.vertex(p, n, color, tile, 0.01 + edge * 0.98, 0.985 - a * 0.97)
+        this.vertex(p, n, color, tile, 0.01 + edge * 0.98, 0.985 - a * 0.97, flex[0] + (flex[1] - flex[0]) * a, beat)
       }
     }
     for (let k = 0; k < segments; k++) {
@@ -232,6 +234,7 @@ class TreeMesh {
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.normals, 3))
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.colors, 3))
     g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uvs, 2))
+    g.setAttribute('aWind', new THREE.Float32BufferAttribute(this.wind, 2))
     g.setIndex(this.indices)
     return g
   }
@@ -274,7 +277,7 @@ function pine(rand, dense) {
 function branches(m, rand, start, dir, length, radius, depth, color, ends) {
   const mid = start.clone().addScaledVector(dir, length * 0.5).add(V((rand() - 0.5) * 0.3, 0, (rand() - 0.5) * 0.3) .multiplyScalar(length * 0.5))
   const end = start.clone().addScaledVector(dir, length).add(V((rand() - 0.5) * 0.4, 0, (rand() - 0.5) * 0.4).multiplyScalar(length * 0.5))
-  m.tube([start, mid, end], [radius, radius * 0.82, radius * 0.62], color, depth > 1 ? 6 : 4)
+  m.tube([start, mid, end], [radius, radius * 0.82, radius * 0.62], color, depth > 1 ? 6 : 4, (3 - depth) * 0.14)
   if (depth === 0) { ends.push(end); return }
   const forks = depth === 3 ? 4 : 2 + (rand() > 0.55 ? 1 : 0)
   for (let i = 0; i < forks; i++) {
@@ -287,6 +290,7 @@ function branches(m, rand, start, dir, length, radius, depth, color, ends) {
 
 function crown(m, rand, ends, tile, cardSize, perEnd, center, low, high) {
   const top = Math.max(...ends.map((e) => e.y)), bottom = Math.min(...ends.map((e) => e.y))
+  const reach = Math.max(...ends.map((e) => e.distanceTo(center)))
   for (const end of ends) {
     for (let i = 0; i < perEnd; i++) {
       const dir = V(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize()
@@ -294,8 +298,10 @@ function crown(m, rand, ends, tile, cardSize, perEnd, center, low, high) {
       const size = cardSize * (0.8 + rand() * 0.45)
       const at = end.clone().add(V(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(cardSize * 1.05))
       const height = (at.y - bottom) / (top - bottom + 0.01)
-      const c = low.clone().lerp(high, Math.min(1, height * 0.8 + rand() * 0.25))
-      m.card(at.addScaledVector(dir, -size / 2), dir, side, size, size, tile, { center, near: c, far: c })
+      // Light barely reaches the middle of a crown, which gives it depth.
+      const depth = 0.6 + Math.min(1, at.distanceTo(center) / reach) ** 2 * 0.5
+      const c = low.clone().lerp(high, Math.min(1, height * 0.8 + rand() * 0.25)).multiplyScalar(depth)
+      m.card(at.addScaledVector(dir, -size / 2), dir, side, size, size, tile, { center, near: c, far: c, flex: [0.75, 1] })
     }
   }
 }
@@ -344,14 +350,17 @@ function palm(rand, dense) {
 
 function foliageMaterial(map, sway) {
   const material = new THREE.MeshLambertMaterial({ map, vertexColors: true, side: THREE.DoubleSide, alphaTest: 0.42 })
-  addSway(material, sway)
+  addTreeSway(material, sway)
   const bend = material.onBeforeCompile
   material.customProgramCacheKey = () => `foliage-${sway}`
   material.onBeforeCompile = (shader, renderer) => {
     bend(shader, renderer)
-    shader.uniforms.uFocus = world.uFocus
+    Object.assign(shader.uniforms, { uFocus: world.uFocus, uSunDir: world.uSunDir, uSunColor: world.uSunColor, uNight: world.uNight, uCloud: world.uCloud })
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uFocus;')
+      .replace('#include <common>', `#include <common>
+        uniform float uFocus, uNight, uCloud;
+        uniform vec3 uSunDir, uSunColor;
+        varying float vLeaf;`)
       // Dissolves anything between the camera and the character, so the woods stay playable.
       .replace('#include <map_fragment>', `
         vec3 viewPos = -vViewPosition;
@@ -368,13 +377,20 @@ function foliageMaterial(map, sway) {
         float texels = max(length(dFdx(vMapUv)), length(dFdy(vMapUv))) * ${(TILE * COLS).toFixed(1)};
         diffuseColor.a *= 1.0 + max(log2(max(texels, 1.0)), 0.0) * 0.32;
         #include <alphatest_fragment>`)
+      // Sunlight glows through leaves when you look towards it.
+      .replace('#include <opaque_fragment>', `
+        vec3 sunView = normalize((viewMatrix * vec4(uSunDir, 0.0)).xyz);
+        float facing = max(dot(normalize(vViewPosition), -sunView), 0.0);
+        float glow = pow(facing, 3.0) * vLeaf * (1.0 - uNight) * (1.0 - uCloud * 0.8);
+        outgoingLight += diffuseColor.rgb * uSunColor * vec3(1.0, 1.04, 0.82) * glow * 0.75;
+        #include <opaque_fragment>`)
   }
   return material
 }
 
 function depthMaterial(map, sway) {
   const material = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map, alphaTest: 0.42, side: THREE.DoubleSide })
-  return addSway(material, sway)
+  return addTreeSway(material, sway)
 }
 
 export function buildTrees(dense) {

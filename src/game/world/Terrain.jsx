@@ -2,17 +2,15 @@ import { useMemo } from 'react'
 import { useThree } from '@react-three/fiber'
 import { RigidBody, TrimeshCollider } from '@react-three/rapier'
 import * as THREE from 'three'
-import { heights, heightAt, mulberry32, SEG, slopeAt, smoothstep, SPAN } from './heightfield'
+import { heights, heightAt, meadowColor, meadowNoise, mulberry32, SEG, slopeAt, smoothstep, SPAN } from './heightfield'
 import { PATHS, ZONES } from './layout'
 import { world } from './uniforms'
 
-const GRASS = [[0x7f, 0xb8, 0x5c], [0x8f, 0xc2, 0x62], [0x6d, 0xa9, 0x5e]]
 const SAND = [0xf1, 0xd9, 0xa8]
 const WET = [0xc9, 0xad, 0x83]
 
 const ROCK = [0x8f, 0x8a, 0x96]
 const SNOW = [0xf4, 0xf6, 0xfb]
-const FOREST = [0x4f, 0x8f, 0x58]
 const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t)
 
 // Paints a square of the island. Run once for the whole map and once, sharper, for the centre.
@@ -32,9 +30,8 @@ function paintGround(size, span) {
     for (let x = 0; x < L; x++) {
       const wx = (x / L) * span - span / 2, wz = (y / L) * span - span / 2
       const h = heightAt(wx, wz)
-      const n = Math.sin(wx * 0.31) * Math.cos(wz * 0.27) + Math.sin(wx * 0.11 + wz * 0.13)
-      let g = n > 0.5 ? GRASS[1] : n < -0.5 ? GRASS[2] : GRASS[0]
-      g = mix(g, FOREST, smoothstep(-55, -100, wx) * 0.8)
+      const n = meadowNoise(wx, wz)
+      const g = meadowColor(wx, wz)
       let c = h < 0.15 ? mix(WET, SAND, Math.max(0, (h + 0.6) / 0.75)) : mix(SAND, g, Math.min(1, (h - 0.15) / 0.5))
       if (h > 2.5) {
         const slope = slopeAt(wx, wz)

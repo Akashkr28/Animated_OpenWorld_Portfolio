@@ -4,6 +4,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import * as THREE from 'three'
 import { distToPath, distToRiver, distToZone, heightAt, mulberry32, slopeAt, smoothstep } from './heightfield'
 import { addSway } from './uniforms'
+import FallingLeaves from './FallingLeaves'
 import { buildTrees } from './trees'
 
 function part(geometry, color, { at = [0, 0, 0], rot = [0, 0, 0], scale = [1, 1, 1] } = {}) {
@@ -33,7 +34,7 @@ function scatter({ seed, tries, spacing, accept }) {
   return placed
 }
 
-function placeInstances(mesh, items) {
+function placeInstances(mesh, items, hue = 0) {
   const dummy = new THREE.Object3D()
   const color = new THREE.Color()
   items.forEach((item, i) => {
@@ -42,7 +43,9 @@ function placeInstances(mesh, items) {
     dummy.scale.setScalar(item.scale)
     dummy.updateMatrix()
     mesh.setMatrixAt(i, dummy.matrix)
-    mesh.setColorAt(i, color.setScalar(item.tint))
+    // Trees also drift a little warmer or cooler, so a forest isn't one flat green.
+    const shift = Math.sin(item.rot * 7) * hue
+    mesh.setColorAt(i, color.setRGB(item.tint * (1 + shift), item.tint, item.tint * (1 - shift)))
   })
   mesh.instanceMatrix.needsUpdate = true
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
@@ -70,7 +73,7 @@ function Forest({ species, items }) {
 
 function TreeInstances({ geometry, items, species }) {
   const mesh = useRef()
-  useLayoutEffect(() => placeInstances(mesh.current, items), [items])
+  useLayoutEffect(() => placeInstances(mesh.current, items, 0.09), [items])
   return (
     <instancedMesh
       ref={mesh} args={[geometry, species.material, items.length]} customDepthMaterial={species.depth}
@@ -143,6 +146,7 @@ export default function Scatter({ dense }) {
       <Forest species={kit.oak} items={data.oaks} />
       <Forest species={kit.blossom} items={data.blossoms} />
       <Forest species={kit.palm} items={data.palms} />
+      <FallingLeaves blossoms={data.blossoms} oaks={data.oaks} dense={dense} />
       <Instances geometry={geo.rock} items={data.rocks} />
       <Instances geometry={geo.tuft} items={data.tufts} sway={0.42} castShadow={false} />
     </>
