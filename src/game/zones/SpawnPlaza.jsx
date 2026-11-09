@@ -5,6 +5,7 @@ import { heightAt } from '../world/heightfield'
 import { PLAZA_LAMPS as lamps, ZONES } from '../world/layout'
 import { profile, zoneText } from '../../data/portfolio'
 import ZoneMarker from './ZoneMarker'
+import { bulb } from '../world/glow'
 
 const SIGN = { x: -5.5, z: 8.5, yaw: 0.5 }
 
@@ -18,7 +19,7 @@ function Lamp({ x, z }) {
       </mesh>
       <mesh position-y={2.75}>
         <icosahedronGeometry args={[0.24, 0]} />
-        <meshBasicMaterial color="#ffd591" />
+        <primitive object={bulb('#ffd591')} attach="material" />
       </mesh>
       <mesh position-y={3}>
         <coneGeometry args={[0.3, 0.2, 6]} />

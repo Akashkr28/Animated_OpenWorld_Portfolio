@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { world } from './uniforms'
 import { arrival } from '../Arrival'
+import { updateBulbs } from './glow'
 import { useGameStore } from '../../store/useGameStore'
 import { prefersReducedMotion } from '../../lib/device'
 import { setAmbience, thunder } from '../../lib/audio'
@@ -144,6 +145,7 @@ export function updateEnvironment(dt) {
   env.flash = Math.max(0, env.flash - dt * 5)
 
   applyPalette(env.time)
+  updateBulbs(env.dark)
   env.light.dir.copy(env.sun.y > 0.02 ? env.sun : env.moon)
 
   world.uSunDir.value.copy(env.sun)

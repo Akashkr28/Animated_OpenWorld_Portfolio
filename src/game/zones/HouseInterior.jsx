@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { mulberry32 } from '../world/heightfield'
 import { HOUSE, ROOM } from '../world/layout'
 import { certifications, profile } from '../../data/portfolio'
+import { bulb } from '../world/glow'
 
 const IN_X = HOUSE.halfW - 0.25
 const IN_Z = HOUSE.halfD - 0.25
@@ -285,7 +286,7 @@ export default function HouseInterior({ height }) {
       </mesh>
       <mesh position={[0.7, height - 0.52, 0.1]}>
         <sphereGeometry args={[0.11, 12, 10]} />
-        <meshBasicMaterial color="#fff0c9" />
+        <primitive object={bulb('#fff0c9', { always: true })} attach="material" />
       </mesh>
     </group>
   )

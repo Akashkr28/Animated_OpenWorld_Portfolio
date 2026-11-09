@@ -10,6 +10,7 @@ import Sky from './world/Sky'
 import Lighting from './world/Lighting'
 import Arrival, { arrival, endArrival, prepareArrival } from './Arrival'
 import Grass from './world/Grass'
+import PostEffects from './world/PostEffects'
 import Scatter from './world/Scatter'
 import SkyLife from './world/SkyLife'
 import River from './world/River'
@@ -80,7 +81,7 @@ export default function GameCanvas() {
         shadows={high ? 'percentage' : false}
         dpr={dpr}
         camera={{ fov: 52, near: 0.1, far: 3200, position: [0, 8, 30] }}
-        gl={{ antialias: !touch, powerPreference: 'high-performance' }}
+        gl={{ antialias: false, powerPreference: 'high-performance' }}
         onCreated={({ gl }) => {
           gl.domElement.addEventListener('webglcontextlost', () => {
             useGameStore.setState({ mode: 'classic', autoClassic: true })
@@ -118,6 +119,7 @@ export default function GameCanvas() {
           </Physics>
           <ReadySignal />
         </Suspense>
+        <PostEffects rich={high} />
       </Canvas>
     </div>
     <Hud touch={touch} />

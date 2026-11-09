@@ -7,6 +7,7 @@ import { heightAt, WALKWAYS } from '../world/heightfield'
 import { landmark, LANTERNS } from '../world/layout'
 import { env } from '../world/environment'
 import { world } from '../world/uniforms'
+import { bulb } from '../world/glow'
 
 const dummy = new THREE.Object3D()
 const STONE = '#9a95a8'
@@ -261,11 +262,11 @@ function Cove() {
         <group ref={flame} position-y={0.2}>
           <mesh position-y={0.4}>
             <coneGeometry args={[0.36, 0.95, 6]} />
-            <meshBasicMaterial color="#ff8a3c" />
+            <primitive object={bulb('#ff8a3c', { always: true })} attach="material" />
           </mesh>
           <mesh position-y={0.3}>
             <coneGeometry args={[0.2, 0.58, 6]} />
-            <meshBasicMaterial color="#ffe08a" />
+            <primitive object={bulb('#ffe08a', { always: true })} attach="material" />
           </mesh>
         </group>
         <mesh position={[3.4, 1.2, -2]} rotation-y={0.785} castShadow>
@@ -351,7 +352,7 @@ function Isle() {
         </mesh>
         <mesh position-y={3.9}>
           <boxGeometry args={[1.3, 1.1, 1.3]} />
-          <meshBasicMaterial color="#ffd591" />
+          <primitive object={bulb('#ffd591')} attach="material" />
         </mesh>
         <mesh position-y={4.95} castShadow>
           <coneGeometry args={[1.5, 1, 4]} />

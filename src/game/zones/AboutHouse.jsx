@@ -9,6 +9,7 @@ import { zoneText } from '../../data/portfolio'
 import { sfx } from '../../lib/audio'
 import HouseInterior from './HouseInterior'
 import ZoneMarker from './ZoneMarker'
+import { bulb } from '../world/glow'
 
 const W = HOUSE.halfW * 2, D = HOUSE.halfD * 2, H = 3.6, ROOF = 2.8
 const T = 0.25 // wall thickness
@@ -57,7 +58,7 @@ function Front() {
       <Door />
       <mesh position={[W / 2 + 0.12, 2.75, 1.25]}>
         <icosahedronGeometry args={[0.16, 0]} />
-        <meshBasicMaterial color="#ffd591" />
+        <primitive object={bulb('#ffd591')} attach="material" />
       </mesh>
       <Window position={[W / 2 + 0.02, 1.9, 2.1]} rotation={Math.PI / 2} />
       <Window position={[W / 2 + 0.02, 1.9, -2.1]} rotation={Math.PI / 2} />
@@ -101,7 +102,7 @@ function Window({ position, rotation = 0 }) {
       </mesh>
       <mesh position-z={0.07}>
         <planeGeometry args={[1.05, 1.05]} />
-        <meshBasicMaterial color="#ffd591" />
+        <primitive object={bulb('#ffd591')} attach="material" />
       </mesh>
       <mesh position-z={0.08}>
         <boxGeometry args={[0.07, 1.05, 0.02]} />

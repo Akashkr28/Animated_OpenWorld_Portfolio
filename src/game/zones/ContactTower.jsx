@@ -10,6 +10,7 @@ import { env } from '../world/environment'
 import { zoneText } from '../../data/portfolio'
 import { useGameStore } from '../../store/useGameStore'
 import ZoneMarker from './ZoneMarker'
+import { bulb } from '../world/glow'
 
 const STRIPES = [['#fff4e3', 3.1, 2.75], ['#ff7a59', 2.75, 2.42], ['#fff4e3', 2.42, 2.1], ['#ff7a59', 2.1, 1.8]]
 const SEGMENT = 3
@@ -89,7 +90,7 @@ export default function ContactTower() {
         </mesh>
         <mesh position-y={top + 1.2}>
           <cylinderGeometry args={[1.25, 1.25, 1.8, 8]} />
-          <meshBasicMaterial color="#ffe6a8" />
+          <primitive object={bulb('#ffe6a8')} attach="material" />
         </mesh>
         <mesh position-y={top + 2.8} castShadow>
           <coneGeometry args={[1.8, 1.5, 8]} />

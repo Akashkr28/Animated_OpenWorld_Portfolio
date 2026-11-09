@@ -21,6 +21,11 @@ export default function CharacterModel() {
       if (o.isMesh) {
         o.castShadow = true
         o.frustumCulled = false
+        // His eyes, core and jets are unlit. Pushing them past white lets the bloom catch them.
+        if (o.material.isMeshBasicMaterial && !o.material.userData.boosted) {
+          o.material.color.multiplyScalar(1.7)
+          o.material.userData.boosted = true
+        }
       }
     })
   }, [scene])

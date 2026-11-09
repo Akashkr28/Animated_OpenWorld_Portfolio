@@ -54,11 +54,12 @@ export default function Lighting({ shadows }) {
       <directionalLight
         ref={sun}
         castShadow={shadows}
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-34}
-        shadow-camera-right={34}
-        shadow-camera-top={34}
-        shadow-camera-bottom={-34}
+        shadow-mapSize={[2048, 2048]}
+        shadow-radius={2.6}
+        shadow-camera-left={-46}
+        shadow-camera-right={46}
+        shadow-camera-top={46}
+        shadow-camera-bottom={-46}
         shadow-camera-near={1}
         shadow-camera-far={140}
         shadow-bias={-0.0006}
