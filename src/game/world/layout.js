@@ -1,5 +1,5 @@
 import { CatmullRomCurve3, Vector3 } from 'three'
-import { milestones, projects } from '../../data/portfolio'
+import { contact, milestones, projects } from '../../data/portfolio'
 
 // Island coordinates: -Z is north. Heights come from terrain.js.
 export const SPAWN = { x: 0, z: 19 }
@@ -119,6 +119,23 @@ export const GUESTBOOK = { x: 5.2, z: 8.4, yaw: -0.5 }
 export const MAILBOX = { x: -2.4, z: -41.5 }
 export const TOWER = { x: 3, z: -48 }
 
+// A paved circle beside the Contact Tower with each profile carved as a stone monument.
+export const SOCIAL = { x: 20.5, z: -46.5, radius: 9 }
+export const socialStones = [
+  { kind: 'linkedin', label: 'LinkedIn', href: contact.linkedin, color: '#4aa3ff' },
+  { kind: 'github', label: 'GitHub', href: contact.github, color: '#fff4e3' },
+  { kind: 'email', label: 'Email', href: `mailto:${contact.email}`, color: '#ff7a59' },
+  { kind: 'resume', label: 'Resume', href: contact.resume, color: '#ffc27a' },
+].map((stone, i, all) => {
+  // An arc on the far side, so they all face back toward the tower.
+  const angle = -1.2 + (i / (all.length - 1)) * 2.4
+  const x = SOCIAL.x + Math.cos(angle) * 6.2, z = SOCIAL.z + Math.sin(angle) * 6.2
+  return { ...stone, x, z, yaw: Math.atan2(SOCIAL.x - x, SOCIAL.z - z) }
+})
+// Lanterns stand between the stones and at both ends of the arc.
+export const socialLamps = [-1.6, -0.8, 0, 0.8, 1.6].map((angle) => [SOCIAL.x + Math.cos(angle) * 7.6, SOCIAL.z + Math.sin(angle) * 7.6])
+export const nearSocial = (x, z, margin = 0) => Math.hypot(x - SOCIAL.x, z - SOCIAL.z) < SOCIAL.radius + margin
+
 // Everything the player can press E on.
 export const interactables = [
   { id: 'door', x: HOUSE.doorX + 1.8, z: HOUSE.doorZ, radius: 2.2, prompt: 'Go inside', action: 'enter' },
@@ -131,4 +148,9 @@ export const interactables = [
   })),
   { id: 'guestbook', x: GUESTBOOK.x - 0.6, z: GUESTBOOK.z + 1.6, radius: 3, prompt: 'Read the guestbook', panel: { type: 'guestbook' } },
   { id: 'contact', x: MAILBOX.x, z: MAILBOX.z, radius: 3.4, prompt: 'Open the mailbox', panel: { type: 'contact' } },
+  ...socialStones.map(({ kind, label, href, x, z, yaw }) => ({
+    // The trigger sits in front of the stone, where the visitor stands to read it.
+    id: `social-${kind}`, x: x + Math.sin(yaw) * 1.6, z: z + Math.cos(yaw) * 1.6, radius: 1.5,
+    prompt: kind === 'resume' ? 'Download my resume' : kind === 'email' ? 'Email me' : `Open my ${label}`, link: href,
+  })),
 ]

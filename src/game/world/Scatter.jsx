@@ -6,6 +6,7 @@ import { distToPath, distToRiver, distToZone, heightAt, mulberry32, slopeAt, smo
 import { addSway } from './uniforms'
 import FallingLeaves from './FallingLeaves'
 import { buildTrees } from './trees'
+import { nearSocial } from './layout'
 
 function part(geometry, color, { at = [0, 0, 0], rot = [0, 0, 0], scale = [1, 1, 1] } = {}) {
   const g = geometry.index ? geometry.toNonIndexed() : geometry
@@ -82,7 +83,7 @@ function TreeInstances({ geometry, items, species }) {
   )
 }
 
-const clear = (x, z, gap) => distToPath(x, z) > gap && distToZone(x, z) > 1.5 && distToRiver(x, z) > 1.6
+const clear = (x, z, gap) => distToPath(x, z) > gap && distToZone(x, z) > 1.5 && distToRiver(x, z) > 1.6 && !nearSocial(x, z, 2.5)
 
 // Static colliders are created directly: hundreds of React components would slow startup.
 function useTreeColliders(trees, rocks) {
@@ -115,7 +116,7 @@ export default function Scatter({ dense }) {
     const rocks = scatter({ seed: 47, tries: 2600, spacing: 7, accept: (x, z, h) => h > 0.1 && clear(x, z, 3) })
     const tufts = scatter({
       seed: 59, tries: dense ? 16000 : 7000, spacing: 1.5,
-      accept: (x, z, h) => h > 0.9 && h < 16 && distToPath(x, z) > 2.4 && distToZone(x, z) > 0 && distToRiver(x, z) > 1,
+      accept: (x, z, h) => h > 0.9 && h < 16 && distToPath(x, z) > 2.4 && distToZone(x, z) > 0 && distToRiver(x, z) > 1 && !nearSocial(x, z, 0.5),
     })
     return { pines, oaks, blossoms, palms, rocks, tufts }
   }, [dense])

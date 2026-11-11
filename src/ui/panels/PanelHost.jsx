@@ -7,7 +7,7 @@ import { profile, projects } from '../../data/portfolio'
 import { timeGreeting } from '../../lib/greeting'
 import { useGameStore } from '../../store/useGameStore'
 
-const heading = 'mb-2 mt-6 font-display text-lg font-bold'
+const heading = 'hud-label mb-3 mt-7 !text-apricot'
 
 function Body({ panel, onClose }) {
   if (panel.type === 'map') {
@@ -21,7 +21,7 @@ function Body({ panel, onClose }) {
     return (
       <Panel eyebrow={`${timeGreeting().title} I'm a ${profile.title.toLowerCase()}`} title={profile.name} onClose={onClose}>
         <Bio />
-        <div className="mt-4"><ResumeButton /></div>
+        <div className="mt-5"><ResumeButton /></div>
         <h3 className={heading}>Education and certification</h3>
         <Education />
         <h3 className={heading}>Skills</h3>

@@ -3,6 +3,7 @@ import { advance, Canvas, useFrame } from '@react-three/fiber'
 import { PerformanceMonitor, useProgress } from '@react-three/drei'
 import { Physics } from '@react-three/rapier'
 import Player from './player/Player'
+import SocialStones from './zones/SocialStones'
 import FollowCamera from './player/FollowCamera'
 import Terrain from './world/Terrain'
 import Water from './world/Water'
@@ -112,6 +113,7 @@ export default function GameCanvas() {
             <ProjectsGallery />
             <JourneyPath />
             <ContactTower />
+            <SocialStones />
             <Arrival />
             <Player />
             <FollowCamera />

@@ -31,6 +31,8 @@ export function interact() {
   if (!nearby || panel || player.sleeping) return
   if (nearby.action === 'sleep') sleep()
   else if (nearby.action === 'enter') player.teleport = { x: HOUSE.x + 2.4, z: HOUSE.z }
+  else if (nearby.link?.startsWith('mailto:')) window.location.href = nearby.link
+  else if (nearby.link) window.open(nearby.link, '_blank', 'noopener')
   else openPanel(nearby.panel)
 }
 

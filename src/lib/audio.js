@@ -249,6 +249,7 @@ function tone(freq, at, length, volume, type = 'sine') {
 const SFX = {
   open: () => { tone(523, 0, 0.16, 0.12); tone(784, 0.07, 0.22, 0.1) },
   close: () => tone(392, 0, 0.14, 0.08),
+  tick: () => tone(1320, 0, 0.035, 0.018),
   door: () => { tone(196, 0, 0.16, 0.09, 'triangle'); tone(147, 0.08, 0.2, 0.07, 'triangle') },
   reveal: () => { tone(659, 0, 0.3, 0.09); tone(988, 0.1, 0.4, 0.07) },
   achievement: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.5, 0.1)),

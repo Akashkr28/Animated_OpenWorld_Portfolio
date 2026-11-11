@@ -8,9 +8,14 @@ export default function GuestbookPage() {
   const signer = useGameStore((s) => s.signer)
   return (
     <>
-      <p className="text-sm text-cream/85">
-        <b className="text-apricot">{book.total}</b> {book.total === 1 ? 'visitor' : 'visitors'} so far, and <b className="text-apricot">{book.signed}</b> signed.
-      </p>
+      <dl className="grid grid-cols-2 gap-2">
+        {[[book.total, book.total === 1 ? 'Visitor so far' : 'Visitors so far'], [book.signed, 'Names signed']].map(([n, label]) => (
+          <div key={label} className="rounded-2xl bg-cream/6 px-4 py-3 ring-1 ring-cream/10">
+            <dt className="hud-label">{label}</dt>
+            <dd className="text-glow font-display text-3xl font-extrabold text-apricot">{n}</dd>
+          </div>
+        ))}
+      </dl>
       {!signer && <div className="mt-4"><SignForm /></div>}
       {book.names.length > 0 ? (
         <ul className="mt-5 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">

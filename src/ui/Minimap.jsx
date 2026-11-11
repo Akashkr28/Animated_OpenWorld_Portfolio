@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { islandRadius } from '../game/world/heightfield'
-import { ISLET, LANDMARKS, MOUNTAIN, PATHS, RIVER, ZONES } from '../game/world/layout'
+import { ISLET, LANDMARKS, MOUNTAIN, PATHS, RIVER, SOCIAL, ZONES } from '../game/world/layout'
 import { player } from '../game/player/playerState'
 import { teleportTo } from '../game/teleport'
 import { zoneText } from '../data/portfolio'
@@ -55,9 +55,11 @@ export default function Minimap() {
   }, [])
 
   return (
-    <nav aria-label="Island map" className="glass relative size-32 overflow-clip rounded-2xl bg-[#1f6f9c]/70 sm:size-40">
+    <nav aria-label="Island map" className="hud relative size-32 rounded-full p-1.5 sm:size-40">
+      <div className="relative size-full overflow-clip rounded-full bg-[#1f6f9c] shadow-[inset_0_0_18px_rgb(6_5_22/0.7)]">
       <div ref={layer} className="absolute top-0 left-0" style={{ width: `${ZOOM * 100}%`, height: `${ZOOM * 100}%` }}>
         <MapBase />
+        <span aria-hidden="true" title="Find me online" className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-[#4aa3ff]" style={{ left: `${pct(SOCIAL.x)}%`, top: `${pct(SOCIAL.z)}%` }} />
         {LANDMARKS.filter((l) => discovered[l.id]).map((l) => (
           <span key={l.id} className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-apricot" style={{ left: `${pct(l.x)}%`, top: `${pct(l.z)}%` }} />
         ))}
@@ -78,9 +80,12 @@ export default function Minimap() {
           </button>
         ))}
       </div>
-      <svg ref={arrow} viewBox="0 0 12 12" className="pointer-events-none absolute top-1/2 left-1/2 size-3.5" aria-hidden="true">
+      <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-1/2 size-9 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(255_244_227/0.35),transparent_70%)]" />
+      <svg ref={arrow} viewBox="0 0 12 12" className="pointer-events-none absolute top-1/2 left-1/2 size-4 drop-shadow-[0_0_4px_rgb(255_194_122)]" aria-hidden="true">
         <path d="M6 0 11 12 6 9 1 12Z" fill="#fff4e3" stroke="#1b1838" strokeWidth="1" strokeLinejoin="round" />
       </svg>
+      </div>
+      <span aria-hidden="true" className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 rounded-md bg-night px-1.5 font-display text-[10px] font-extrabold text-apricot ring-1 ring-apricot/50">N</span>
     </nav>
   )
 }

@@ -21,9 +21,9 @@ export default function SignForm({ autoFocus = false, children }) {
         <input
           value={name} onChange={(e) => { setName(e.target.value); setError('') }} maxLength={16} autoFocus={autoFocus}
           aria-label="Your name" aria-invalid={!!error} placeholder="First name" autoComplete="off"
-          className="min-w-0 flex-1 rounded-full bg-night/50 px-4 py-2 text-base placeholder:text-cream/60 sm:text-sm"
+          className="min-w-0 flex-1 rounded-xl bg-night/60 px-3.5 py-2 text-base ring-1 ring-cream/15 placeholder:text-cream/55 focus:ring-2 focus:ring-apricot focus:outline-none sm:text-sm"
         />
-        <button type="submit" disabled={busy} className="rounded-full bg-coral px-4 py-2 text-sm font-bold text-night hover:bg-apricot">Leave my name</button>
+        <button type="submit" disabled={busy} className="btn-primary">Leave my name</button>
         {children}
       </div>
       {error && <p className="mt-2 text-sm text-apricot" role="alert">{error}</p>}

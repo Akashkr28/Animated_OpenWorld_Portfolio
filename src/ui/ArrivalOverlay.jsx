@@ -17,9 +17,9 @@ export default function ArrivalOverlay() {
       <motion.div className="absolute inset-y-0 right-0 w-3/4" style={bank('100%')} initial={{ x: 0, opacity: 1 }} animate={{ x: '100%', opacity: 0 }} transition={parting} />
       <button
         type="button" onClick={endArrival}
-        className="glass pointer-events-auto absolute right-4 bottom-6 rounded-full px-4 py-2 text-sm font-semibold hover:bg-night/80"
+        className="hud hud-pill pointer-events-auto absolute right-4 bottom-6"
       >
-        Skip intro
+        Skip intro <span aria-hidden="true" className="keycap !h-5 !min-w-5 !px-1 !text-[10px]">Any key</span>
       </button>
     </div>
   )

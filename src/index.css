@@ -33,16 +33,166 @@ body.game-mode { overflow: hidden; overscroll-behavior: none; }
   backdrop-filter: blur(16px) saturate(1.3);
 }
 
+@layer components {
 .keycap {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 1.9rem; height: 1.9rem; padding: 0 0.45rem;
-  border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700;
-  background: rgb(255 244 227 / 0.14);
-  border: 1px solid rgb(255 244 227 / 0.25);
-  border-bottom-width: 3px;
+  min-width: 1.9rem; height: 1.9rem; padding: 0 0.5rem;
+  border-radius: 0.5rem; font-size: 0.75rem; font-weight: 800;
+  color: var(--color-cream);
+  background: linear-gradient(180deg, rgb(255 244 227 / 0.24), rgb(255 244 227 / 0.08));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), inset 0 -3px 0 rgb(6 5 22 / 0.45), 0 0 0 1px rgb(255 244 227 / 0.22);
 }
 
 .parchment {
   color: #3b2a22;
   background: linear-gradient(180deg, #f5e3bf, #fbf0d6 18%, #fbf0d6 82%, #efd9ae);
+}
+
+/* ---- Game interface kit ---------------------------------------------------------------- */
+
+/* A crystal panel: deep glass, a lit top edge, and a hairline border that catches the light. */
+.hud {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgb(255 244 227 / 0.07), transparent 38%),
+    linear-gradient(160deg, rgb(52 47 104 / 0.78), rgb(20 18 46 / 0.8));
+  box-shadow:
+    0 18px 44px -12px rgb(6 5 22 / 0.6),
+    0 2px 6px rgb(6 5 22 / 0.3),
+    inset 0 1px 0 rgb(255 244 227 / 0.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+}
+.hud::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(150deg, rgb(255 214 160 / 0.55), rgb(255 244 227 / 0.12) 35%, rgb(255 244 227 / 0.06) 65%, rgb(47 183 168 / 0.4));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Small bracket corners, like a targeting frame. */
+.hud-corners::after {
+  --c: rgb(255 194 122 / 0.85);
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / 14px 2px,
+    linear-gradient(var(--c), var(--c)) top left / 2px 14px,
+    linear-gradient(var(--c), var(--c)) top right / 14px 2px,
+    linear-gradient(var(--c), var(--c)) top right / 2px 14px,
+    linear-gradient(var(--c), var(--c)) bottom left / 14px 2px,
+    linear-gradient(var(--c), var(--c)) bottom left / 2px 14px,
+    linear-gradient(var(--c), var(--c)) bottom right / 14px 2px,
+    linear-gradient(var(--c), var(--c)) bottom right / 2px 14px;
+  background-repeat: no-repeat;
+}
+
+.hud-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(255 244 227 / 0.62);
+}
+
+/* Square icon buttons for the HUD. */
+.hud-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.875rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+.hud-icon:hover, .hud-pill:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgb(255 194 122 / 0.5), 0 8px 24px -6px rgb(255 122 89 / 0.55); color: var(--color-apricot); }
+.hud-icon:active, .hud-pill:active { transform: translateY(1px); }
+.hud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding: 0 0.95rem;
+  border-radius: 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+/* The main call to action: warm, lit from above, and glowing on hover. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--color-night);
+  background: linear-gradient(180deg, #ffb48f, var(--color-coral) 55%, #f0603f);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 0 rgb(120 30 10 / 0.25), 0 8px 22px -8px rgb(255 122 89 / 0.8);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+.btn-primary:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), inset 0 -2px 0 rgb(120 30 10 / 0.25), 0 12px 30px -8px rgb(255 122 89 / 0.95); }
+.btn-primary:active { transform: translateY(1px); }
+.btn-primary:disabled { opacity: 0.6; transform: none; }
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background: rgb(255 244 227 / 0.08);
+  box-shadow: inset 0 0 0 1px rgb(255 244 227 / 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.btn-ghost:hover { transform: translateY(-1px); background: rgb(255 244 227 / 0.14); box-shadow: inset 0 0 0 1px rgb(255 194 122 / 0.55); }
+
+/* A thin progress bar that glows at its leading edge. */
+.meter { height: 0.3rem; border-radius: 999px; background: rgb(255 244 227 / 0.12); overflow: hidden; }
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-lagoon), #7ff0dd);
+  box-shadow: 0 0 10px rgb(127 240 221 / 0.8);
+  transition: width 0.6s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.meter.warm > span { background: linear-gradient(90deg, var(--color-coral), var(--color-apricot)); box-shadow: 0 0 10px rgb(255 194 122 / 0.8); }
+
+/* A divider with a small diamond in the middle. */
+.rule { display: flex; align-items: center; gap: 0.6rem; color: rgb(255 194 122 / 0.8); }
+.rule::before, .rule::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgb(255 244 227 / 0.25), transparent); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgb(255 244 227 / 0.07);
+  box-shadow: inset 0 0 0 1px rgb(255 244 227 / 0.14);
+}
+
+.text-glow { text-shadow: 0 0 18px rgb(255 194 122 / 0.45), 0 2px 10px rgb(6 5 22 / 0.8); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-icon, .hud-pill, .btn-primary, .btn-ghost { transition: none; }
+  .hud-icon:hover, .hud-pill:hover, .btn-primary:hover, .btn-ghost:hover { transform: none; }
+}
+
+@keyframes ring-out { from { transform: scale(0.85); opacity: 0.9; } to { transform: scale(1.45); opacity: 0; } }
+.ring-out { animation: ring-out 1.6s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .ring-out { animation: none; opacity: 0; } }
 }

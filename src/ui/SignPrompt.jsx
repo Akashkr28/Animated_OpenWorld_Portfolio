@@ -10,12 +10,13 @@ export default function SignPrompt() {
       {open && (
         <motion.section
           aria-label="Leave your name on the island"
-          className="glass pointer-events-auto absolute bottom-48 left-1/2 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl p-4 sm:bottom-28"
+          className="hud hud-corners pointer-events-auto absolute bottom-48 left-1/2 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl p-4 sm:bottom-28"
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
         >
-          <p className="mb-2 font-display text-lg leading-tight font-bold">Leave your name on the island?</p>
+          <p className="hud-label">Guestbook</p>
+          <p className="mb-3 font-display text-lg leading-tight font-bold">Leave your name on the island?</p>
           <SignForm>
-            <button type="button" onClick={skipSigning} className="rounded-full px-3 py-2 text-sm font-semibold hover:bg-cream/10">Skip</button>
+            <button type="button" onClick={skipSigning} className="btn-ghost">Skip</button>
           </SignForm>
         </motion.section>
       )}

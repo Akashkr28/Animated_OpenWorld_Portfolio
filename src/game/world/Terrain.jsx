@@ -3,7 +3,7 @@ import { useThree } from '@react-three/fiber'
 import { RigidBody, TrimeshCollider } from '@react-three/rapier'
 import * as THREE from 'three'
 import { heights, heightAt, meadowColor, meadowNoise, mulberry32, SEG, slopeAt, smoothstep, SPAN } from './heightfield'
-import { PATHS, ZONES } from './layout'
+import { PATHS, SOCIAL, ZONES } from './layout'
 import { world } from './uniforms'
 
 const SAND = [0xf1, 0xd9, 0xa8]
@@ -96,7 +96,7 @@ function paintGround(size, span) {
   }
 
   // Gallery and tower forecourts.
-  for (const [zone, radius, fill] of [[ZONES.projects, 12.5, '#cdbfae'], [ZONES.contact, 8.5, '#d4c6ae']]) {
+  for (const [zone, radius, fill] of [[ZONES.projects, 12.5, '#cdbfae'], [ZONES.contact, 8.5, '#d4c6ae'], [SOCIAL, SOCIAL.radius, '#cfc3b4']]) {
     ctx.fillStyle = fill
     ctx.beginPath(); ctx.arc(toPx(zone.x), toPx(zone.z), radius * px, 0, 7); ctx.fill()
     ctx.strokeStyle = 'rgba(120,100,80,.5)'

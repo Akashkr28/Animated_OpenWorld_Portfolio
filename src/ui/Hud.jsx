@@ -7,6 +7,7 @@ import Joystick from './Joystick'
 import PanelHost from './panels/PanelHost'
 import SignPrompt from './SignPrompt'
 import { ResumeButton } from './panels/content'
+import { Download, Gem, Layout, MapIcon, phaseIcon, SoundOff, SoundOn, WEATHER_ICONS } from './icons'
 import { input, interact } from '../game/player/input'
 import { discoveries, milestones, profile, zoneText } from '../data/portfolio'
 import { setWeather, skipToTime, TIMES, WEATHER, WEATHER_ORDER } from '../game/world/environment'
@@ -19,21 +20,28 @@ const QUEUED_SCROLL_MS = 4500 // long enough to read when another scroll is wait
 const GREET_DELAY_MS = 500
 const SIGN_DELAY_MS = 4000 // after the robot's hello
 const SOUND_ON_HELLO_MS = 350 // lets the island fade in first
-const hudButton = 'glass rounded-full px-3.5 py-2 text-sm font-semibold hover:bg-night/80'
+const tick = () => sfx('tick')
+const initials = profile.name.split(' ').map((w) => w[0]).slice(0, 2).join('')
 
 function Tutorial({ touch }) {
   const done = useGameStore((s) => s.tutorialDone)
   const ready = useGameStore((s) => s.ready)
   const reduced = useReducedMotion()
   const pulse = (delay) => (reduced ? {} : {
-    animate: { y: [0, 2, 0], opacity: [0.7, 1, 0.7] },
+    animate: { y: [0, 2, 0], opacity: [0.75, 1, 0.75] },
     transition: { duration: 1.6, repeat: Infinity, delay },
   })
+  const keys = (list, label, delay) => (
+    <span className="flex items-center gap-1.5">
+      {list.map((k, i) => <motion.span key={k} className="keycap" {...pulse(delay + i * 0.2)}>{k}</motion.span>)}
+      <span className="ml-0.5 text-cream/85">{label}</span>
+    </span>
+  )
   return (
     <AnimatePresence>
       {ready && !done && (
         <motion.div
-          className="glass absolute bottom-48 left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-5 py-3 sm:bottom-10"
+          className="hud absolute bottom-48 left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-5 py-3 sm:bottom-8"
           initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
           transition={{ duration: 0.5 }}
         >
@@ -41,16 +49,14 @@ function Tutorial({ touch }) {
             <p className="text-sm">Drag the <b>joystick</b> to walk. Swipe anywhere to look around.</p>
           ) : (
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
-              <span className="flex items-center gap-1.5">
-                {['W', 'A', 'S', 'D'].map((k, i) => <motion.span key={k} className="keycap" {...pulse(i * 0.2)}>{k}</motion.span>)}
-                <span className="ml-1">Walk</span>
-              </span>
-              <span className="flex items-center gap-1.5"><motion.span className="keycap" {...pulse(0.9)}>Shift</motion.span>Run</span>
-              <span className="flex items-center gap-1.5"><motion.span className="keycap" {...pulse(1.1)}>Space</motion.span>Jump</span>
-              <span className="flex items-center gap-1.5"><motion.span className="keycap" {...pulse(1.3)}>E</motion.span>Interact</span>
-              <span className="flex items-center gap-1.5"><motion.span className="keycap" {...pulse(1.5)}>M</motion.span>Map</span>
-              <span className="flex items-center gap-1.5"><motion.span className="keycap" {...pulse(1.7)}>G</motion.span>Wave</span>
-              <span className="text-cream/75">Drag to look</span>
+              <span className="hud-label">Controls</span>
+              {keys(['W', 'A', 'S', 'D'], 'Walk', 0)}
+              {keys(['Shift'], 'Run', 0.9)}
+              {keys(['Space'], 'Jump', 1.1)}
+              {keys(['E'], 'Interact', 1.3)}
+              {keys(['M'], 'Map', 1.5)}
+              {keys(['G'], 'Wave', 1.7)}
+              <span className="text-cream/70">Drag to look</span>
             </div>
           )}
         </motion.div>
@@ -69,14 +75,36 @@ function Prompt({ touch }) {
           key={nearby.id}
           type="button"
           onClick={interact}
-          className="glass absolute bottom-48 left-1/2 flex w-max -translate-x-1/2 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold sm:bottom-14"
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+          aria-label={nearby.prompt}
+          className="hud hud-corners absolute bottom-48 left-1/2 flex w-max -translate-x-1/2 items-center gap-3 rounded-2xl py-2 pr-5 pl-2 text-left sm:bottom-28"
+          initial={{ opacity: 0, y: 14, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 26 }}
         >
-          {!touch && <span className="keycap">E</span>}
-          {touch ? `Tap: ${nearby.prompt}` : `Press E · ${nearby.prompt}`}
+          <span className="relative grid size-11 place-items-center">
+            <span aria-hidden="true" className="ring-out absolute inset-0 rounded-xl ring-2 ring-apricot/70" />
+            {touch ? <span className="keycap size-9 text-base">✋</span> : <span className="keycap size-9 text-base">E</span>}
+          </span>
+          <span>
+            <span className="hud-label block">{touch ? 'Tap' : 'Interact'}</span>
+            <span className="block font-display text-base leading-tight font-bold">{nearby.prompt}</span>
+          </span>
         </motion.button>
       )}
     </AnimatePresence>
+  )
+}
+
+function PlayerCard() {
+  return (
+    <div className="hud hud-corners flex items-center gap-3 rounded-2xl py-2 pr-4 pl-2">
+      <span aria-hidden="true" className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-apricot to-coral font-display text-sm font-extrabold text-night shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_6px_18px_-6px_rgb(255_122_89/0.9)]">
+        {initials}
+      </span>
+      <div>
+        <h1 className="font-display text-sm leading-tight font-bold sm:text-base">{profile.name}</h1>
+        <p className="text-xs text-cream/75">{profile.title}</p>
+      </div>
+    </div>
   )
 }
 
@@ -85,29 +113,37 @@ function Checklist() {
   const [open, setOpen] = useState(() => window.innerWidth >= 640)
   const count = ZONE_IDS.filter((z) => visited[z]).length
   const discovered = useGameStore((s) => Object.keys(s.discovered).length)
+  const hidden = Object.keys(discoveries).length
   return (
-    <div className="glass w-40 rounded-2xl px-3.5 py-2 text-sm sm:w-44">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between font-semibold">
-        <span>Explored</span>
-        <span className="text-apricot">{count}/{ZONE_IDS.length}</span>
+    <div className="hud w-44 rounded-2xl p-3 text-sm sm:w-52">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between">
+        <span className="hud-label">Explored</span>
+        <span className="font-display font-bold text-apricot">{count}/{ZONE_IDS.length}</span>
       </button>
+      <div className="meter mt-2" aria-hidden="true"><span style={{ width: `${(count / ZONE_IDS.length) * 100}%` }} /></div>
       {open && (
-        <ul className="mt-1.5 space-y-1">
+        <ul className="mt-2.5 space-y-1.5">
           {ZONE_IDS.map((z) => (
-            <li key={z} className={`flex items-center gap-2 ${visited[z] ? '' : 'text-cream/70'}`}>
-              <span aria-hidden="true" className={`grid size-4 place-items-center rounded-full text-[10px] font-bold ${visited[z] ? 'bg-lagoon text-night' : 'border border-cream/40'}`}>
+            <li key={z} className={`flex items-center gap-2.5 ${visited[z] ? '' : 'text-cream/65'}`}>
+              <span
+                aria-hidden="true"
+                className={`grid size-4 shrink-0 place-items-center text-[10px] font-black ${visited[z] ? 'rounded-full bg-lagoon text-night shadow-[0_0_10px_rgb(47_183_168/0.8)]' : 'rotate-45 rounded-[3px] border border-cream/40'}`}
+              >
                 {visited[z] ? '✓' : ''}
               </span>
-              {zoneText[z].short}
+              <span className={visited[z] ? 'font-semibold' : ''}>{zoneText[z].short}</span>
               <span className="sr-only">{visited[z] ? ' visited' : ' not visited yet'}</span>
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-1.5 flex justify-between border-t border-cream/15 pt-1.5 font-semibold">
-        <span>Discoveries</span>
-        <span className="text-apricot">{discovered}/{Object.keys(discoveries).length}</span>
-      </p>
+      <div className="mt-2.5 border-t border-cream/10 pt-2">
+        <p className="flex items-center justify-between">
+          <span className="hud-label">Discoveries</span>
+          <span className="font-display font-bold text-apricot">{discovered}/{hidden}</span>
+        </p>
+        <div className="meter warm mt-1.5" aria-hidden="true"><span style={{ width: `${(discovered / hidden) * 100}%` }} /></div>
+      </div>
     </div>
   )
 }
@@ -141,31 +177,45 @@ function WorldControls() {
     setTimeIndex(next)
     skipToTime(TIMES[next][1])
   }
-  const chip = 'flex w-full items-center justify-between gap-3 rounded-lg px-1.5 py-1 hover:bg-cream/10'
+  const PhaseIcon = phaseIcon(phase)
+  const WeatherIcon = WEATHER_ICONS[weather]
+  const row = 'flex w-full items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-cream/10'
   return (
-    <div ref={box} className="glass relative z-20 w-32 rounded-2xl p-1.5 text-xs sm:w-40 sm:text-sm">
-      <button type="button" onClick={nextTime} aria-label={`Time is ${clock}, ${phase}. Skip to ${TIMES[(timeIndex + 1) % TIMES.length][0]}`} className={chip}>
-        <span className="font-semibold tabular-nums">{clock}</span>
-        <span className="text-apricot">{phase}</span>
+    <div ref={box} className="hud relative z-20 w-36 rounded-2xl p-1.5 text-xs sm:w-44 sm:text-sm">
+      <button type="button" onClick={nextTime} onPointerEnter={tick} aria-label={`Time is ${clock}, ${phase}. Skip to ${TIMES[(timeIndex + 1) % TIMES.length][0]}`} className={row}>
+        <PhaseIcon className="size-4 text-apricot" />
+        <span className="font-display font-bold tabular-nums">{clock}</span>
+        <span className="ml-auto text-cream/70">{phase}</span>
       </button>
-      <button type="button" onClick={() => setPicking(!picking)} aria-expanded={picking} aria-label={`Weather is ${WEATHER[weather].label}. Change weather`} className={`${chip} bg-cream/10`}>
-        <span className="font-semibold">Weather</span>
-        <span className="text-apricot">{WEATHER[weather].label} <span aria-hidden="true">▾</span></span>
+      <button type="button" onClick={() => setPicking(!picking)} onPointerEnter={tick} aria-expanded={picking} aria-label={`Weather is ${WEATHER[weather].label}. Change weather`} className={`${row} bg-cream/8`}>
+        <WeatherIcon className="size-4 text-lagoon" />
+        <span className="font-semibold">{WEATHER[weather].label}</span>
+        <span aria-hidden="true" className={`ml-auto text-cream/60 transition-transform ${picking ? 'rotate-180' : ''}`}>▾</span>
       </button>
-      {picking && (
-        <ul className="absolute top-full right-0 z-10 mt-2 grid w-48 grid-cols-2 gap-1 rounded-2xl border border-cream/20 bg-night p-1.5 shadow-xl">
-          {WEATHER_ORDER.map((name) => (
-            <li key={name}>
-              <button
-                type="button" onClick={() => pick(name)} aria-pressed={name === weather}
-                className={`w-full rounded-lg px-2 py-2 text-sm font-semibold ${name === weather ? 'bg-coral text-night' : 'hover:bg-cream/10'}`}
-              >
-                {WEATHER[name].label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <AnimatePresence>
+        {picking && (
+          <motion.ul
+            className="hud absolute top-full right-0 z-10 mt-2 grid w-52 grid-cols-2 gap-1 rounded-2xl p-1.5"
+            initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16 }}
+          >
+            {WEATHER_ORDER.map((name) => {
+              const Glyph = WEATHER_ICONS[name]
+              return (
+                <li key={name}>
+                  <button
+                    type="button" onClick={() => pick(name)} onPointerEnter={tick} aria-pressed={name === weather}
+                    className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold ${name === weather ? 'btn-primary !px-2.5 !py-2' : 'hover:bg-cream/10'}`}
+                  >
+                    <Glyph className="size-4" />
+                    {WEATHER[name].label}
+                  </button>
+                </li>
+              )
+            })}
+          </motion.ul>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -180,17 +230,23 @@ function Toast() {
     return () => clearTimeout(id)
   }, [toast, clear])
   return (
-    <div className="absolute top-1/3 left-1/2 -translate-x-1/2" role="status">
+    <div className="absolute top-[30%] left-1/2 -translate-x-1/2" role="status">
       <AnimatePresence mode="wait">
         {toast && (
           <motion.div
             key={toast.id}
-            className="w-max max-w-[calc(100vw-2rem)] text-center [text-shadow:0_2px_12px_rgb(10_8_30/0.75)]"
+            className="w-[min(32rem,calc(100vw-2rem))] text-center"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.5 }}
           >
-            <p className="font-display text-2xl font-bold sm:text-3xl">{toast.title}</p>
-            {toast.text && <p className="text-sm sm:text-base">{toast.text}</p>}
+            <motion.div
+              className="rule mx-auto w-3/4" aria-hidden="true"
+              initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.7, ease: [0.2, 0.8, 0.25, 1] }}
+            >
+              <span className="text-[10px]">◆</span>
+            </motion.div>
+            <p className="text-glow mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{toast.title}</p>
+            {toast.text && <p className="mt-1 text-sm text-cream/90 [text-shadow:0_2px_10px_rgb(6_5_22/0.85)] sm:text-base">{toast.text}</p>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -262,15 +318,20 @@ function Achievement() {
       {show && (
         <motion.div
           role="status"
-          className="glass absolute top-1/4 left-1/2 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-3xl px-7 py-5 text-center"
+          className="hud hud-corners absolute top-1/4 left-1/2 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-4 rounded-3xl py-4 pr-7 pl-4"
           initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
-          <p className="text-sm font-semibold text-apricot">Achievement unlocked</p>
-          <p className="font-display text-2xl font-bold">{show === 'world' ? 'World Wanderer' : 'Island Explorer'}</p>
-          <p className="mt-1 text-sm text-cream/85">
-            {show === 'world' ? 'You found every hidden place. Impressive.' : "You've seen all five zones. There's more out in the wilds!"}
-          </p>
+          <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-apricot to-coral text-night shadow-[inset_0_1px_0_rgb(255_255_255/0.5),0_0_28px_rgb(255_194_122/0.7)]">
+            <Gem className="size-7" />
+          </span>
+          <div>
+            <p className="hud-label !text-apricot">Achievement unlocked</p>
+            <p className="font-display text-2xl font-extrabold">{show === 'world' ? 'World Wanderer' : 'Island Explorer'}</p>
+            <p className="mt-0.5 text-sm text-cream/85">
+              {show === 'world' ? 'You found every hidden place. Impressive.' : "You've seen all five zones. There's more out in the wilds!"}
+            </p>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -284,6 +345,7 @@ export default function Hud({ touch }) {
   const fading = useGameStore((s) => s.fading)
   const greeting = useGameStore((s) => s.greeting)
   const signPrompt = useGameStore((s) => s.signPrompt)
+  const nearby = useGameStore((s) => !!s.nearby)
   const setMode = useGameStore((s) => s.setMode)
   const setMutedState = useGameStore((s) => s.setMuted)
 
@@ -335,25 +397,25 @@ export default function Hud({ touch }) {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
         >
           <div className="absolute top-3 left-3 flex flex-col items-start gap-2 sm:top-4 sm:left-4">
-            <div className="glass rounded-2xl px-3.5 py-2">
-              <h1 className="font-display text-sm leading-tight font-bold sm:text-base">{profile.name}</h1>
-              <p className="text-xs text-cream/80">{profile.title}</p>
-            </div>
+            <PlayerCard />
             <Checklist />
             {/* On phones these sit here so they don't cover the character's speech bubble. */}
             <div className="flex gap-2 sm:hidden">
-              <button type="button" onClick={openMap} className={hudButton}>Map</button>
-              <ResumeButton label="Resume" className={hudButton} />
+              <button type="button" onClick={openMap} aria-label="World map" className="hud hud-icon"><MapIcon /></button>
+              <ResumeButton label={<Download />} aria-label="Download resume" className="hud hud-icon" />
             </div>
           </div>
 
           <div className="absolute top-3 right-3 flex flex-col items-end gap-2 sm:top-4 sm:right-4">
             <div className="flex gap-2">
-              <button type="button" onClick={toggleMute} aria-pressed={!muted} aria-label={muted ? 'Turn sound on' : 'Turn sound off'} className={hudButton}>
-                <span className="sm:hidden">{muted ? 'Muted' : 'Sound'}</span>
-                <span className="hidden sm:inline">{muted ? 'Sound off' : 'Sound on'}</span>
+              <button
+                type="button" onClick={toggleMute} onPointerEnter={tick} aria-pressed={!muted} aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
+                title={muted ? 'Sound off' : 'Sound on'} className={`hud hud-icon ${muted ? 'text-cream/70' : 'text-lagoon'}`}
+              >
+                {muted ? <SoundOff /> : <SoundOn />}
               </button>
-              <button type="button" onClick={() => setMode('classic')} className={hudButton}>
+              <button type="button" onClick={() => setMode('classic')} onPointerEnter={tick} className="hud hud-pill">
+                <Layout className="size-4" />
                 <span className="sm:hidden">Classic</span>
                 <span className="hidden sm:inline">Classic view</span>
               </button>
@@ -361,13 +423,15 @@ export default function Hud({ touch }) {
             <Minimap />
             <WorldControls />
             <div className="hidden flex-col items-end gap-2 sm:flex">
-              <button type="button" onClick={openMap} className={hudButton}>World map</button>
-              <ResumeButton className={hudButton} />
+              <button type="button" onClick={openMap} onPointerEnter={tick} className="hud hud-pill">
+                <MapIcon className="size-4" /> World map <span className="keycap !h-5 !min-w-5 !px-1 !text-[10px]">M</span>
+              </button>
+              <ResumeButton label={<><Download className="size-4" /> Download resume</>} className="hud hud-pill" />
             </div>
           </div>
 
           <MilestoneScroll />
-          {!signPrompt && <Tutorial touch={touch} />}
+          {!signPrompt && !nearby && <Tutorial touch={touch} />}
           <SignPrompt />
           <Prompt touch={touch} />
           <Toast />
@@ -378,8 +442,8 @@ export default function Hud({ touch }) {
             <>
               <div className="pointer-events-auto absolute bottom-6 left-5"><Joystick /></div>
               <div className="absolute right-6 bottom-8 flex flex-col items-center gap-3">
-                <button type="button" onClick={() => { input.jumpQueued = true }} className="glass size-16 rounded-full text-sm font-bold">Jump</button>
-                <button type="button" onClick={interact} className="size-20 rounded-full bg-coral font-bold text-night shadow-lg">Interact</button>
+                <button type="button" onClick={() => { input.jumpQueued = true }} className="hud size-16 rounded-full text-sm font-bold">Jump</button>
+                <button type="button" onClick={interact} className="btn-primary size-20 justify-center !rounded-full !p-0">Interact</button>
               </div>
             </>
           )}

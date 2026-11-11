@@ -26,7 +26,7 @@ export default function Joystick() {
   return (
     <div
       role="presentation"
-      className="glass relative size-32 touch-none rounded-full"
+      className="hud relative size-32 touch-none rounded-full"
       onPointerDown={(e) => {
         const box = e.currentTarget.getBoundingClientRect()
         origin.current = { id: e.pointerId, x: box.left + box.width / 2, y: box.top + box.height / 2 }
@@ -37,7 +37,7 @@ export default function Joystick() {
       onPointerUp={end}
       onPointerCancel={end}
     >
-      <div ref={knob} className="absolute top-1/2 left-1/2 -mt-7 -ml-7 size-14 rounded-full bg-cream/80 shadow-lg" />
+      <div ref={knob} className="absolute top-1/2 left-1/2 -mt-7 -ml-7 size-14 rounded-full bg-gradient-to-b from-cream to-[#e9d9c0] shadow-[inset_0_-3px_0_rgb(6_5_22/0.25),0_8px_20px_-6px_rgb(6_5_22/0.8)]" />
     </div>
   )
 }

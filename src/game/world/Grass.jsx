@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { player } from '../player/playerState'
 import { distToPath, distToRiver, distToZone, heightAt, meadowColor, mulberry32, slopeAt, smoothstep } from './heightfield'
-import { insideHouse } from './layout'
+import { insideHouse, nearSocial } from './layout'
 import { world } from './uniforms'
 
 // A meadow that only exists around the robot. The ground is split into cells, and each cell
@@ -108,7 +108,7 @@ function buildMaterial(robot, reach) {
 }
 
 function growth(x, z, h, nearEdge) {
-  if (h < 0.5 || h > 16 || slopeAt(x, z) > 0.72 || insideHouse(x, z, 0.9)) return 0
+  if (h < 0.5 || h > 16 || slopeAt(x, z) > 0.72 || insideHouse(x, z, 0.9) || nearSocial(x, z, 0.3)) return 0
   let size = smoothstep(0.5, 0.68, h) * smoothstep(16, 12, h)
   if (nearEdge) {
     const path = distToPath(x, z), zone = distToZone(x, z), river = distToRiver(x, z)
