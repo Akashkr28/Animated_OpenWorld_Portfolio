@@ -5,3 +5,5 @@ dist
 .DS_Store
 .vercel
 .claude
+# Large promo videos stay out of the repository
+marketing/

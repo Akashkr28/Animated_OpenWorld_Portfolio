@@ -431,7 +431,7 @@ export default function Hud({ touch }) {
           </div>
 
           <MilestoneScroll />
-          {!signPrompt && !nearby && <Tutorial touch={touch} />}
+          {touch && !signPrompt && !nearby && <Tutorial touch={touch} />}
           <SignPrompt />
           <Prompt touch={touch} />
           <Toast />

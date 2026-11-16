@@ -21,6 +21,7 @@ import VisitorBots from './zones/VisitorBots'
 import { env, setWeather, skipToTime } from './world/environment'
 import Landmarks from './zones/Landmarks'
 import SpawnPlaza from './zones/SpawnPlaza'
+import ControlKeys from './zones/ControlKeys'
 import AboutHouse from './zones/AboutHouse'
 import ProjectsGallery from './zones/ProjectsGallery'
 import JourneyPath from './zones/JourneyPath'
@@ -107,6 +108,7 @@ export default function GameCanvas() {
             <Weather detail={!touch} />
             <Landmarks />
             <SpawnPlaza />
+            {!touch && <ControlKeys />}
             <Guestbook />
             <VisitorBots />
             <AboutHouse />

@@ -128,7 +128,7 @@ export default function Arrival() {
     // The first frames render from the sky too, so the loading screen lifts onto the right view.
     if (useGameStore.getState().ready) {
       if (arrival.time === 0) markSeen()
-      arrival.time += Math.min(dt, 0.1)
+      arrival.time += Math.min(Math.max(dt, 0), 0.1)
     }
     const t = arrival.time
     if (t >= ENDS_AT) return endArrival()
