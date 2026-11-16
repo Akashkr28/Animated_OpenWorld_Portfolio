@@ -7,10 +7,10 @@ import Joystick from './Joystick'
 import PanelHost from './panels/PanelHost'
 import SignPrompt from './SignPrompt'
 import { ResumeButton } from './panels/content'
-import { Download, Gem, Layout, MapIcon, phaseIcon, SoundOff, SoundOn, WEATHER_ICONS } from './icons'
+import { Download, Gem, Layout, MapIcon, phaseIcon, SEASON_ICONS, SoundOff, SoundOn, WEATHER_ICONS } from './icons'
 import { input, interact } from '../game/player/input'
 import { discoveries, milestones, profile, zoneText } from '../data/portfolio'
-import { setWeather, skipToTime, TIMES, WEATHER, WEATHER_ORDER } from '../game/world/environment'
+import { SEASON_ORDER, SEASONS, setSeason, setWeather, skipToTime, TIMES, WEATHER, WEATHER_ORDER } from '../game/world/environment'
 import { robot, setMuted, sfx } from '../lib/audio'
 import { keepBotInPlace, startVisit } from '../lib/visitors'
 import { useGameStore, ZONE_IDS } from '../store/useGameStore'
@@ -150,16 +150,17 @@ function Checklist() {
 
 function WorldControls() {
   const weather = useGameStore((s) => s.weather)
+  const season = useGameStore((s) => s.season) ?? 'summer'
   const clock = useGameStore((s) => s.clock)
   const phase = useGameStore((s) => s.phase)
   const [timeIndex, setTimeIndex] = useState(2)
-  const [picking, setPicking] = useState(false)
+  const [picking, setPicking] = useState(null) // 'weather', 'season' or null
   const box = useRef()
 
   useEffect(() => {
     if (!picking) return
-    const outside = (e) => { if (!box.current.contains(e.target)) setPicking(false) }
-    const escape = (e) => { if (e.key === 'Escape') setPicking(false) }
+    const outside = (e) => { if (!box.current.contains(e.target)) setPicking(null) }
+    const escape = (e) => { if (e.key === 'Escape') setPicking(null) }
     window.addEventListener('pointerdown', outside)
     window.addEventListener('keydown', escape)
     return () => {
@@ -169,8 +170,9 @@ function WorldControls() {
   }, [picking])
 
   const pick = (name) => {
-    setWeather(name)
-    setPicking(false)
+    if (picking === 'season') setSeason(name)
+    else setWeather(name)
+    setPicking(null)
   }
   const nextTime = () => {
     const next = (timeIndex + 1) % TIMES.length
@@ -179,6 +181,10 @@ function WorldControls() {
   }
   const PhaseIcon = phaseIcon(phase)
   const WeatherIcon = WEATHER_ICONS[weather]
+  const SeasonIcon = SEASON_ICONS[season]
+  const options = picking === 'season'
+    ? SEASON_ORDER.map((name) => [name, SEASONS[name].label, SEASON_ICONS[name], name === season])
+    : WEATHER_ORDER.map((name) => [name, WEATHER[name].label, WEATHER_ICONS[name], name === weather])
   const row = 'flex w-full items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-cream/10'
   return (
     <div ref={box} className="hud relative z-20 w-36 rounded-2xl p-1.5 text-xs sm:w-44 sm:text-sm">
@@ -187,10 +193,15 @@ function WorldControls() {
         <span className="font-display font-bold tabular-nums">{clock}</span>
         <span className="ml-auto text-cream/70">{phase}</span>
       </button>
-      <button type="button" onClick={() => setPicking(!picking)} onPointerEnter={tick} aria-expanded={picking} aria-label={`Weather is ${WEATHER[weather].label}. Change weather`} className={`${row} bg-cream/8`}>
+      <button type="button" onClick={() => setPicking(picking === 'weather' ? null : 'weather')} onPointerEnter={tick} aria-expanded={picking === 'weather'} aria-label={`Weather is ${WEATHER[weather].label}. Change weather`} className={`${row} bg-cream/8`}>
         <WeatherIcon className="size-4 text-lagoon" />
         <span className="font-semibold">{WEATHER[weather].label}</span>
-        <span aria-hidden="true" className={`ml-auto text-cream/60 transition-transform ${picking ? 'rotate-180' : ''}`}>▾</span>
+        <span aria-hidden="true" className={`ml-auto text-cream/60 transition-transform ${picking === 'weather' ? 'rotate-180' : ''}`}>▾</span>
+      </button>
+      <button type="button" onClick={() => setPicking(picking === 'season' ? null : 'season')} onPointerEnter={tick} aria-expanded={picking === 'season'} aria-label={`Season is ${SEASONS[season].label}. Change season`} className={`${row} mt-1 bg-cream/8`}>
+        <SeasonIcon className="size-4 text-apricot" />
+        <span className="font-semibold">{SEASONS[season].label}</span>
+        <span aria-hidden="true" className={`ml-auto text-cream/60 transition-transform ${picking === 'season' ? 'rotate-180' : ''}`}>▾</span>
       </button>
       <AnimatePresence>
         {picking && (
@@ -199,20 +210,17 @@ function WorldControls() {
             initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
           >
-            {WEATHER_ORDER.map((name) => {
-              const Glyph = WEATHER_ICONS[name]
-              return (
-                <li key={name}>
-                  <button
-                    type="button" onClick={() => pick(name)} onPointerEnter={tick} aria-pressed={name === weather}
-                    className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold ${name === weather ? 'btn-primary !px-2.5 !py-2' : 'hover:bg-cream/10'}`}
-                  >
-                    <Glyph className="size-4" />
-                    {WEATHER[name].label}
-                  </button>
-                </li>
-              )
-            })}
+            {options.map(([name, label, Glyph, current]) => (
+              <li key={name}>
+                <button
+                  type="button" onClick={() => pick(name)} onPointerEnter={tick} aria-pressed={current}
+                  className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold ${current ? 'btn-primary !px-2.5 !py-2' : 'hover:bg-cream/10'}`}
+                >
+                  <Glyph className="size-4" />
+                  {label}
+                </button>
+              </li>
+            ))}
           </motion.ul>
         )}
       </AnimatePresence>

@@ -22,6 +22,7 @@ const MOODS = [
   { t: 1, ...NIGHT },
 ]
 const STORM = v(0.92, 0.97, 1.06)
+const season = new THREE.Vector3()
 
 const GRADE = /* glsl */ `
   uniform vec3 uShadow, uLight;
@@ -63,6 +64,11 @@ class GradeEffect extends Effect {
     u.get('uSaturation').value = THREE.MathUtils.lerp(a.saturation, b.saturation, k) * (1 - gloom * 0.28)
     u.get('uContrast').value = THREE.MathUtils.lerp(a.contrast, b.contrast, k)
     u.get('uExposure').value = THREE.MathUtils.lerp(a.exposure, b.exposure, k)
+    // Autumn light runs warm, winter cool and bright, spring a touch fresher.
+    const { spring, autumn, winter } = env.seasonMix
+    u.get('uLight').value.multiply(season.set(1 + autumn * 0.06 - winter * 0.03, 1 + spring * 0.02, 1 - autumn * 0.07 + winter * 0.05))
+    u.get('uShadow').value.multiply(season.set(1 - winter * 0.04, 1, 1 + winter * 0.06))
+    u.get('uSaturation').value *= 1 + autumn * 0.06 - winter * 0.12
   }
 }
 
@@ -108,7 +114,7 @@ class MistEffect extends Effect {
     const i = MIST_BY_TIME.findIndex(([t]) => t > time)
     const [t0, d0] = MIST_BY_TIME[Math.max(0, i - 1)], [t1, d1] = MIST_BY_TIME[Math.max(0, i)]
     const k = t1 > t0 ? (time - t0) / (t1 - t0) : 0
-    u.get('uDensity').value = (d0 + (d1 - d0) * k) * (1 + env.rain * 0.5) * (player.indoors ? 0 : 1)
+    u.get('uDensity').value = (d0 + (d1 - d0) * k) * (1 - env.rain * 0.6) * (player.indoors ? 0 : 1) // storms already bring their own fog
     u.get('uMistColor').value.copy(world.uHorizon.value).lerp(white, 0.2 * (1 - env.night)).multiplyScalar(0.5 + (1 - env.night) * 0.3)
   }
 }

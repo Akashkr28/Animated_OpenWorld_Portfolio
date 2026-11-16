@@ -18,7 +18,7 @@ import River from './world/River'
 import Weather from './world/Weather'
 import Guestbook from './zones/Guestbook'
 import VisitorBots from './zones/VisitorBots'
-import { env, setWeather, skipToTime } from './world/environment'
+import { env, setWeather, skipToTime, setSeason } from './world/environment'
 import Landmarks from './zones/Landmarks'
 import SpawnPlaza from './zones/SpawnPlaza'
 import ControlKeys from './zones/ControlKeys'
@@ -44,7 +44,7 @@ await Promise.race([
 
 useGameStore.setState({ loadProgress: 45 })
 
-if (import.meta.env.DEV) window.__island = { player, cameraRig, input, store: useGameStore, advance, env, setWeather, skipToTime, arrival }
+if (import.meta.env.DEV) window.__island = { player, cameraRig, input, store: useGameStore, advance, env, setWeather, setSeason, skipToTime, arrival }
 
 // Waits for real rendered frames so the loading screen lifts onto a finished scene.
 function ReadySignal() {

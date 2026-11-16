@@ -27,5 +27,10 @@ export const Github = (p) => <Icon {...p}><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12
 export const Mail = (p) => <Icon {...p}><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7 8 6 8-6" /></Icon>
 export const Linkedin = (p) => <Icon {...p}><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M7.5 10.5v6M7.5 7.5v.01M11.5 16.5v-6m0 2.5a2.5 2.5 0 0 1 5 0v3.5" /></Icon>
 
+export const Flower = (p) => <Icon {...p}><circle cx="12" cy="10" r="2.2" /><path d="M12 7.8a2.6 2.6 0 1 1 2.6-2.6M14.2 10a2.6 2.6 0 1 1 2.6 2.6M12 12.2a2.6 2.6 0 1 1-2.6 2.6M9.8 10a2.6 2.6 0 1 1-2.6-2.6M12 13v8M12 18c-2.5 0-4-1.5-4.5-3" /></Icon>
+export const Leaf = (p) => <Icon {...p}><path d="M5 19c0-8 5-14 15-14 0 9-5 15-12 15a3 3 0 0 1-3-1z" /><path d="M5 19c3-4 6-7 10-9" /></Icon>
+export const Snowflake = (p) => <Icon {...p}><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5M3.8 10.4l3.4.9-.9 3.4M20.2 13.6l-3.4-.9.9-3.4" /></Icon>
+
+export const SEASON_ICONS = { spring: Flower, summer: Sun, autumn: Leaf, winter: Snowflake }
 export const WEATHER_ICONS = { clear: Sun, cloudy: Cloud, windy: Wind, rain: Rain, storm: Storm, fog: Fog }
 export const phaseIcon = (phase) => (phase === 'Night' ? Moon : phase === 'Dawn' || phase === 'Dusk' ? Sunset : Sun)

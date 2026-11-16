@@ -16,6 +16,16 @@ export const WEATHER = {
   fog: { label: 'Fog', cloud: 0.6, rain: 0, wind: 0.08, fog: 1, next: ['clear', 'cloudy'] },
 }
 export const WEATHER_ORDER = Object.keys(WEATHER)
+
+export const SEASONS = {
+  spring: { label: 'Spring', line: 'The blossom trees are in full bloom.' },
+  summer: { label: 'Summer', line: 'Long, green, golden days.' },
+  autumn: { label: 'Autumn', line: 'The leaves are turning.' },
+  winter: { label: 'Winter', line: 'Snow is settling over the island.' },
+}
+export const SEASON_ORDER = Object.keys(SEASONS)
+// The island starts in the visitor's real season, counted for the northern hemisphere.
+const seasonOfMonth = (m) => (m >= 2 && m <= 4 ? 'spring' : m >= 5 && m <= 7 ? 'summer' : m >= 8 && m <= 10 ? 'autumn' : 'winter')
 export const TIMES = [['Dawn', 0.27], ['Noon', 0.5], ['Dusk', 0.745], ['Night', 0.96]]
 
 const c = (hex) => new THREE.Color(hex)
@@ -51,6 +61,17 @@ export const env = {
   light: { color: new THREE.Color(), intensity: 1, dir: new THREE.Vector3() },
   sky: new THREE.Color(), ground: new THREE.Color(), skyI: 1,
   cloudColor: new THREE.Color(),
+  season: seasonOfMonth(now.getMonth()),
+  seasonMix: { spring: 0, autumn: 0, winter: 0 },
+}
+if (env.season !== 'summer') env.seasonMix[env.season] = 1
+useGameStore.setState({ season: env.season })
+
+export function setSeason(name) {
+  if (name === env.season) return
+  env.season = name
+  useGameStore.setState({ season: name })
+  announce(SEASONS[name].label, SEASONS[name].line)
 }
 
 export function setWeather(name) {
@@ -157,6 +178,13 @@ export function updateEnvironment(dt) {
   world.uWind.value = env.wind
   world.uWindDir.value.set(Math.cos(env.windAngle), Math.sin(env.windAngle))
   world.uFlash.value = env.flash
+  // Seasons blend over a couple of seconds, so a change visibly sweeps across the island.
+  const turn = Math.min(1, dt * 0.9)
+  for (const key of ['spring', 'autumn', 'winter']) env.seasonMix[key] += ((env.season === key ? 1 : 0) - env.seasonMix[key]) * turn
+  world.uSpring.value = env.seasonMix.spring
+  world.uAutumn.value = env.seasonMix.autumn
+  world.uSnow.value = env.seasonMix.winter
+
   // The arrival looks down from high up, so the haze lifts until the robot lands.
   const clearAir = arrival.active ? arrival.blend : 0
   world.uFogNear.value = 90 - env.fog * 78 + clearAir * 420
@@ -165,7 +193,8 @@ export function updateEnvironment(dt) {
   env.cloudColor.copy(world.uHorizon.value).lerp(grey.setRGB(1, 0.98, 0.95), 0.55 * (1 - night)).multiplyScalar(1 - env.cloud * 0.42 - night * 0.4)
 
   // Light rain drops away faster than it falls, so the sound ends with the last visible streaks.
-  const rainHeard = env.rain * Math.min(1, env.rain * 2.5)
+  // In winter the rain falls as snow, which is silent.
+  const rainHeard = env.rain * Math.min(1, env.rain * 2.5) * (1 - env.seasonMix.winter)
   setAmbience({ wind: env.wind, rain: rainHeard, night: night * (1 - env.rain) })
   publishClock()
 }

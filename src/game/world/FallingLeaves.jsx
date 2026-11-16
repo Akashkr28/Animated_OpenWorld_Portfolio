@@ -11,19 +11,20 @@ const SEEN_WITHIN = 60
 
 function build(blossoms, oaks, dense) {
   const rand = mulberry32(83)
-  const start = [], motion = [], color = []
-  const shed = (trees, perTree, tint, height, spread, size) => {
+  const start = [], motion = [], color = [], kind = []
+  const shed = (trees, perTree, tint, height, spread, size, leaf) => {
     for (const tree of trees) {
       for (let i = 0; i < perTree; i++) {
         const a = rand() * Math.PI * 2, r = Math.sqrt(rand()) * spread * tree.scale
         start.push(tree.x + Math.cos(a) * r, tree.y, tree.z + Math.sin(a) * r, (height + rand() * 2) * tree.scale)
         motion.push(rand(), 9 + rand() * 8, rand() * 6.28, size * (0.75 + rand() * 0.5))
         color.push(tint.r, tint.g, tint.b)
+        kind.push(leaf ? 1 : 0)
       }
     }
   }
-  shed(blossoms, dense ? 10 : 4, PETAL, 3.4, 2.6, 0.075)
-  shed(oaks, dense ? 2 : 1, LEAF, 5, 3.6, 0.1)
+  shed(blossoms, dense ? 10 : 4, PETAL, 3.4, 2.6, 0.075, false)
+  shed(oaks, dense ? 5 : 2, LEAF, 5, 3.6, 0.1, true)
 
   const geometry = new THREE.InstancedBufferGeometry()
   geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, -1, 0, 0.62, 0, 0, 0, 1, 0, -0.62, 0, 0], 3))
@@ -31,6 +32,7 @@ function build(blossoms, oaks, dense) {
   geometry.setAttribute('aStart', new THREE.InstancedBufferAttribute(new Float32Array(start), 4))
   geometry.setAttribute('aMotion', new THREE.InstancedBufferAttribute(new Float32Array(motion), 4))
   geometry.setAttribute('aColor', new THREE.InstancedBufferAttribute(new Float32Array(color), 3))
+  geometry.setAttribute('aKind', new THREE.InstancedBufferAttribute(new Float32Array(kind), 1))
   geometry.instanceCount = start.length / 4
   return geometry
 }
@@ -39,12 +41,13 @@ function buildMaterial(robot) {
   const material = new THREE.MeshLambertMaterial({ side: THREE.DoubleSide })
   material.customProgramCacheKey = () => 'falling-leaves'
   material.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, { uTime: world.uTime, uWind: world.uWind, uWindDir: world.uWindDir, uRain: world.uRain, uRobot: robot })
+    Object.assign(shader.uniforms, { uTime: world.uTime, uWind: world.uWind, uWindDir: world.uWindDir, uRain: world.uRain, uRobot: robot, uSpring: world.uSpring, uAutumn: world.uAutumn, uSnow: world.uSnow })
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>
         attribute vec4 aStart, aMotion;
         attribute vec3 aColor;
-        uniform float uTime, uWind, uRain;
+        attribute float aKind;
+        uniform float uTime, uWind, uRain, uSpring, uAutumn, uSnow;
         uniform vec2 uWindDir;
         uniform vec3 uRobot;
         varying vec3 vTint;`)
@@ -59,12 +62,16 @@ function buildMaterial(robot) {
         at.xz += vec2(sin(tumble * 0.7), cos(tumble * 0.53)) * 0.45;
 
         float seen = 1.0 - smoothstep(${(SEEN_WITHIN * 0.7).toFixed(1)}, ${SEEN_WITHIN.toFixed(1)}, distance(at, uRobot));
-        float size = aMotion.w * seen * smoothstep(0.0, 0.05, life) * (1.0 - smoothstep(0.93, 1.0, life)) * (1.0 - uRain * 0.8);
+        // Petals fall in spring and leaves in autumn. Winter is still.
+        float season = aKind > 0.5 ? 0.15 + uAutumn * 1.1 : 0.25 + uSpring * 0.75;
+        float size = aMotion.w * seen * smoothstep(0.0, 0.05, life) * (1.0 - smoothstep(0.93, 1.0, life)) * (1.0 - uRain * 0.8) * season * (1.0 - uSnow);
         vec3 transformed = position * size;
         float c = cos(tumble), s = sin(tumble);
         transformed = vec3(transformed.x * c, transformed.y * s + transformed.x * 0.3, transformed.y * c + transformed.x * s);
         transformed += at;
-        vTint = aColor;`)
+        float h = fract(aMotion.z * 3.1);
+        vec3 turned = mix(vec3(0.95, 0.42, 0.1), vec3(0.98, 0.7, 0.16), h);
+        vTint = aKind > 0.5 ? mix(aColor, turned, uAutumn) : aColor;`)
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vTint;')
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= vTint;')

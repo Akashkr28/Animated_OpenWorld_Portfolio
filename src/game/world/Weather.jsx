@@ -41,8 +41,10 @@ function Rain({ count }) {
 
   useFrame(() => {
     uniforms.uCenter.value.copy(player.position)
-    mesh.current.visible = env.rain > 0.01
-    geometry.setDrawRange(0, Math.floor(count * 6 * Math.min(1, env.rain * 1.25)))
+    // In winter the same weather falls as snow instead.
+    const rain = env.rain * (1 - env.seasonMix.winter)
+    mesh.current.visible = rain > 0.01
+    geometry.setDrawRange(0, Math.floor(count * 6 * Math.min(1, rain * 1.25)))
   })
 
   return (
@@ -92,6 +94,73 @@ function Rain({ count }) {
   )
 }
 
+// Soft flakes drifting down around the player. Light all winter, heavy when it would rain.
+function Snow({ count }) {
+  const points = useRef()
+  const uniforms = useMemo(() => ({
+    uTime: world.uTime, uWind: world.uWind, uWindDir: world.uWindDir, uNight: world.uNight,
+    uCenter: { value: new THREE.Vector3() }, uHouse: { value: HOUSE_BOUNDS }, uAmount: { value: 0 },
+  }), [])
+  const geometry = useMemo(() => {
+    const rand = mulberry32(17)
+    const seeds = new Float32Array(count * 3)
+    for (let i = 0; i < seeds.length; i++) seeds[i] = rand()
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3))
+    g.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 3))
+    return g
+  }, [count])
+
+  useFrame(() => {
+    uniforms.uCenter.value.copy(player.position)
+    const amount = env.seasonMix.winter * (0.3 + env.rain * 0.7)
+    uniforms.uAmount.value = amount
+    points.current.visible = amount > 0.01
+    geometry.setDrawRange(0, Math.floor(count * Math.min(1, amount * 1.2)))
+  })
+
+  return (
+    // Drawn after the other see-through layers, so water and haze don't paint over the flakes.
+    <points ref={points} geometry={geometry} frustumCulled={false} renderOrder={5}>
+      <SharedShader
+        transparent depthWrite={false} uniforms={uniforms}
+        vertexShader={/* glsl */ `
+          uniform float uTime, uWind;
+          uniform vec2 uWindDir;
+          uniform vec3 uCenter;
+          uniform vec4 uHouse;
+          attribute vec3 aSeed;
+          varying float vFade;
+          void main() {
+            const float box = 34.0;
+            vec2 drift = uWindDir * (0.6 + uWind * 3.5);
+            // Fall speed must not depend on the starting height, or flakes bunch into layers over time.
+            float speed = 1.3 + fract(aSeed.x * 7.31 + aSeed.z * 3.17) * 0.9;
+            vec3 p = aSeed * box + vec3(drift.x, -speed, drift.y) * uTime;
+            p.x += sin(uTime * 0.9 + aSeed.z * 30.0) * 0.6;
+            p.z += cos(uTime * 0.7 + aSeed.x * 30.0) * 0.6;
+            p = mod(p - uCenter, box) - box * 0.5 + uCenter + vec3(0.0, 8.0, 0.0);
+            vFade = (p.x > uHouse.x && p.x < uHouse.z && p.z > uHouse.y && p.z < uHouse.w) ? 0.0 : 1.0;
+            vec4 view = viewMatrix * vec4(p, 1.0);
+            // Flakes right at the lens would be huge blurs, so they fade out instead.
+            vFade *= smoothstep(2.0, 5.0, -view.z);
+            gl_Position = projectionMatrix * view;
+            gl_PointSize = clamp((2.5 + aSeed.z * 3.5) * 260.0 / max(-view.z, 1.0), 2.0, 15.0);
+          }`}
+        fragmentShader={/* glsl */ `
+          uniform float uAmount, uNight;
+          varying float vFade;
+          void main() {
+            float d = length(gl_PointCoord - 0.5);
+            float a = smoothstep(0.5, 0.2, d) * vFade * min(1.0, uAmount * 2.2);
+            if (a < 0.02) discard;
+            gl_FragColor = vec4(vec3(1.15) * (1.0 - uNight * 0.4), a);
+          }`}
+      />
+    </points>
+  )
+}
+
 const dummy = new THREE.Object3D()
 
 function Splashes({ count = 110 }) {
@@ -99,11 +168,13 @@ function Splashes({ count = 110 }) {
   const drops = useMemo(() => Array.from({ length: count }, () => ({ x: 0, y: -50, z: 0, age: 1, life: 0.4 })), [count])
 
   useFrame((_, dt) => {
-    mesh.current.visible = env.rain > 0.04
+    // Snow doesn't splash.
+    const rain = env.rain * (1 - env.seasonMix.winter)
+    mesh.current.visible = rain > 0.04
     if (!mesh.current.visible) return
     drops.forEach((d, i) => {
       d.age += dt / d.life
-      if (d.age >= 1 && Math.random() < env.rain * 0.85) {
+      if (d.age >= 1 && Math.random() < rain * 0.85) {
         d.x = player.position.x + (Math.random() - 0.5) * 34
         d.z = player.position.z + (Math.random() - 0.5) * 34
         d.y = insideHouse(d.x, d.z, EAVES) ? -50 : Math.max(heightAt(d.x, d.z), 0) + 0.06
@@ -387,6 +458,7 @@ export default function Weather({ detail }) {
   return (
     <>
       <Rain count={detail ? 6500 : 2600} />
+      <Snow count={detail ? 8000 : 3000} />
       <Splashes />
       <Lightning />
       <WindParticles count={detail ? 110 : 60} />

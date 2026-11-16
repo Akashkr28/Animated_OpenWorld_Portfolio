@@ -18,6 +18,54 @@ export const world = {
   uFocus: { value: 7.6 }, // camera-to-character distance
   uFogNear: { value: 90 },
   uFogFar: { value: 430 },
+  // Seasons, each 0 to 1 and blended while the season turns. Summer is when all three are 0.
+  uSpring: { value: 0 },
+  uAutumn: { value: 0 },
+  uSnow: { value: 0 },
+}
+
+// Seasonal colouring shared by the ground, plants and rocks. Fragment shaders only.
+export const SEASON_GLSL = /* glsl */ `
+  uniform float uSpring, uAutumn, uSnow;
+  vec3 seasonWorldNormal(vec3 viewNormal) { return normalize((vec4(viewNormal, 0.0) * viewMatrix).xyz); }
+  vec3 seasonWorldPos(vec3 viewPos) { return cameraPosition + (vec4(viewPos, 0.0) * viewMatrix).xyz; }
+  float seasonHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  // Leaves turn amber, gold and red, one colour per tree-sized patch.
+  vec3 autumnLeaves(vec3 c, vec3 at, float amount) {
+    float h = seasonHash(floor(at.xz * 0.2));
+    vec3 leaf = mix(vec3(0.92, 0.36, 0.08), vec3(0.95, 0.66, 0.12), h);
+    leaf = mix(leaf, vec3(0.7, 0.13, 0.08), step(0.78, h));
+    float light = dot(c, vec3(0.3, 0.59, 0.11));
+    return mix(c, leaf * (0.45 + light * 1.4), amount);
+  }
+  // Grass and moss dry out to straw.
+  vec3 autumnDry(vec3 c, float amount) {
+    float green = clamp((c.g - max(c.r, c.b)) * 6.0, 0.0, 1.0);
+    float light = dot(c, vec3(0.3, 0.59, 0.11));
+    return mix(c, vec3(0.55, 0.47, 0.22) * (0.55 + light * 1.1), amount * green);
+  }
+  // Snow settles on whatever faces the sky.
+  vec3 snowCover(vec3 c, vec3 up, float amount) {
+    float settle = smoothstep(0.2, 0.75, up.y);
+    return mix(c, vec3(0.8, 0.84, 0.92) * (0.82 + 0.18 * settle), amount * settle);
+  }
+`
+
+// Snow and autumn colour for plain lit materials, such as rocks and tufts.
+export function addSeasonal(material, { dry = false } = {}) {
+  const previous = material.onBeforeCompile
+  const key = material.customProgramCacheKey?.() ?? ''
+  material.customProgramCacheKey = () => `${key}-season-${dry}`
+  material.onBeforeCompile = (shader, renderer) => {
+    previous?.(shader, renderer)
+    Object.assign(shader.uniforms, { uSpring: world.uSpring, uAutumn: world.uAutumn, uSnow: world.uSnow })
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>\n${SEASON_GLSL}`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        ${dry ? 'diffuseColor.rgb = autumnDry(diffuseColor.rgb, uAutumn);' : ''}
+        diffuseColor.rgb = snowCover(diffuseColor.rgb, seasonWorldNormal(normal), uSnow * 0.92);`)
+  }
+  return material
 }
 
 export const SKY_GLSL = /* glsl */ `

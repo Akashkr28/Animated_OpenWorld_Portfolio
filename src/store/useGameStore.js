@@ -30,6 +30,7 @@ export const useGameStore = create((set, get) => ({
   signer: null, // { name, tag } after this visitor has signed
   signPrompt: false,
   weather: 'clear',
+  season: null, // set by the environment from the visitor's date
   clock: '--:--',
   phase: '',
 

@@ -58,12 +58,12 @@ function buildMaterial(robot, reach) {
   const material = new THREE.MeshLambertMaterial({ side: THREE.DoubleSide })
   material.customProgramCacheKey = () => 'grass'
   material.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, { uTime: world.uTime, uWind: world.uWind, uWindDir: world.uWindDir, uRobot: robot, uReach: { value: reach } })
+    Object.assign(shader.uniforms, { uTime: world.uTime, uWind: world.uWind, uWindDir: world.uWindDir, uRobot: robot, uReach: { value: reach }, uSpring: world.uSpring, uAutumn: world.uAutumn, uSnow: world.uSnow })
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>
         attribute float aTip, aPhase, aHead;
         attribute vec4 aRoot, aTint;
-        uniform float uTime, uWind, uReach;
+        uniform float uTime, uWind, uReach, uSpring, uAutumn, uSnow;
         uniform vec2 uWindDir;
         uniform vec3 uRobot;
         varying vec3 vGrass;`)
@@ -73,7 +73,8 @@ function buildMaterial(robot, reach) {
         vec3 transformed = position;
         vec2 away = aRoot.xz - uRobot.xz;
         float near = length(away);
-        float size = aRoot.w * (1.0 - smoothstep(uReach * 0.66, uReach, near));
+        // Snow flattens and buries most of the meadow.
+        float size = aRoot.w * (1.0 - smoothstep(uReach * 0.66, uReach, near)) * (1.0 - uSnow * 0.55);
 
         // The same gust fronts as the trees, broken up by faster ripples you can watch cross the field.
         float along = dot(aRoot.xz, uWindDir), across = dot(aRoot.xz, vec2(-uWindDir.y, uWindDir.x));
@@ -93,12 +94,18 @@ function buildMaterial(robot, reach) {
         transformed.xz += bend * curve * size * 0.7;
         transformed.y *= 1.0 - min(0.6, dot(bend, bend) * 0.4 * aTip);
         transformed += aRoot.xyz;
-        if (aHead > 0.5 && aTint.a < 0.5) transformed = aRoot.xyz;
+        // More wildflowers in spring, none under snow.
+        float bloom = aTint.a > 0.5 ? 1.0 : step(0.985 - uSpring * 0.06, fract(aRoot.x * 7.13 + aRoot.z * 3.71));
+        if (aHead > 0.5 && (bloom < 0.5 || uSnow > 0.5)) transformed = aRoot.xyz;
 
         // Dark at the root and bright at the tip, with gusts showing as a passing sheen.
         vGrass = aTint.rgb * mix(0.62, 1.2, aTip) * (1.0 + gust * aTip * 0.22);
         vGrass = mix(vGrass, vec3(1.0, 0.98, 0.72), aTip * aTip * 0.08);
-        if (aHead > 0.5) vGrass = aTint.a < 1.5 ? vec3(1.0, 0.76, 0.26) : aTint.a < 2.5 ? vec3(0.97, 0.95, 0.98) : vec3(0.72, 0.56, 0.95);`)
+        float light = dot(vGrass, vec3(0.3, 0.59, 0.11));
+        vGrass = mix(vGrass, mix(vec3(0.62, 0.55, 0.25), vec3(0.75, 0.52, 0.2), aTip) * (0.55 + light), uAutumn * 0.55);
+        vGrass = mix(vGrass, vec3(0.78, 0.83, 0.9), uSnow * aTip * 0.7);
+        float hue = aTint.a > 0.5 ? aTint.a : 1.0 + floor(fract(aRoot.z * 5.3) * 3.0);
+        if (aHead > 0.5) vGrass = hue < 1.5 ? vec3(1.0, 0.76, 0.26) : hue < 2.5 ? vec3(0.97, 0.95, 0.98) : vec3(0.72, 0.56, 0.95);`)
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vGrass;')
       .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= vGrass;')

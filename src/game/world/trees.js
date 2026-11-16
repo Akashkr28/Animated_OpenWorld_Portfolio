@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { mulberry32 } from './heightfield'
-import { addTreeSway, world } from './uniforms'
+import { addTreeSway, SEASON_GLSL, world } from './uniforms'
 
 // One painted atlas supplies every tree, so realistic foliage costs no image downloads.
 const TILE = 512
@@ -348,16 +348,21 @@ function palm(rand, dense) {
   return m.geometry()
 }
 
-function foliageMaterial(map, sway) {
+// `kind` is 'evergreen', 'leafy' (turns in autumn and thins in winter) or 'blossom'.
+function foliageMaterial(map, sway, kind) {
   const material = new THREE.MeshLambertMaterial({ map, vertexColors: true, side: THREE.DoubleSide, alphaTest: 0.42 })
   addTreeSway(material, sway)
   const bend = material.onBeforeCompile
-  material.customProgramCacheKey = () => `foliage-${sway}`
+  material.customProgramCacheKey = () => `foliage-${sway}-${kind}`
   material.onBeforeCompile = (shader, renderer) => {
     bend(shader, renderer)
-    Object.assign(shader.uniforms, { uFocus: world.uFocus, uSunDir: world.uSunDir, uSunColor: world.uSunColor, uNight: world.uNight, uCloud: world.uCloud })
+    Object.assign(shader.uniforms, {
+      uFocus: world.uFocus, uSunDir: world.uSunDir, uSunColor: world.uSunColor, uNight: world.uNight, uCloud: world.uCloud,
+      uSpring: world.uSpring, uAutumn: world.uAutumn, uSnow: world.uSnow,
+    })
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
+        ${SEASON_GLSL}
         uniform float uFocus, uNight, uCloud;
         uniform vec3 uSunDir, uSunColor;
         varying float vLeaf;`)
@@ -369,7 +374,16 @@ function foliageMaterial(map, sway) {
         float hide = max(nearer * corridor, 1.0 - smoothstep(1.2, 3.2, -viewPos.z));
         float dither = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
         if (hide > dither) discard;
-        #include <map_fragment>`)
+        #include <map_fragment>
+        vec3 seasonAt = seasonWorldPos(-vViewPosition);
+        ${kind === 'blossom' ? `
+        // Blossom is pink only in spring. The rest of the year these are ordinary leafy trees.
+        float l = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
+        diffuseColor.rgb = mix(vec3(0.24, 0.5, 0.2) * (0.5 + l * 1.3), diffuseColor.rgb, uSpring) ;` : ''}
+        ${kind !== 'evergreen' ? `
+        diffuseColor.rgb = autumnLeaves(diffuseColor.rgb, seasonAt, uAutumn * vLeaf);
+        // Bare branches in winter: the crowns thin out to a few clinging leaves.
+        diffuseColor.a *= 1.0 - uSnow * 0.62 * vLeaf;` : ''}`)
       // Both faces of a card share one normal; flipping it per face makes crowns flicker.
       .replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\nnormal = normalize(vNormal);')
       // Mipmaps thin out alpha, so distant trees would go bald without this boost.
@@ -377,6 +391,9 @@ function foliageMaterial(map, sway) {
         float texels = max(length(dFdx(vMapUv)), length(dFdy(vMapUv))) * ${(TILE * COLS).toFixed(1)};
         diffuseColor.a *= 1.0 + max(log2(max(texels, 1.0)), 0.0) * 0.32;
         #include <alphatest_fragment>`)
+      // Snow settles on the tops of branches and crowns.
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        diffuseColor.rgb = snowCover(diffuseColor.rgb, seasonWorldNormal(normal), uSnow * 0.85);`)
       // Sunlight glows through leaves when you look towards it.
       .replace('#include <opaque_fragment>', `
         vec3 sunView = normalize((viewMatrix * vec4(uSunDir, 0.0)).xyz);
@@ -396,10 +413,13 @@ function depthMaterial(map, sway) {
 export function buildTrees(dense) {
   const atlas = buildAtlas()
   const rand = mulberry32(99)
-  const species = (make, sway) => ({
+  const species = (make, sway, kind) => ({
     variants: [make(rand, dense), make(rand, dense), make(rand, dense)],
-    material: foliageMaterial(atlas, sway),
+    material: foliageMaterial(atlas, sway, kind),
     depth: depthMaterial(atlas, sway),
   })
-  return { pine: species(pine, 0.0016), oak: species(oak, 0.0018), blossom: species(blossom, 0.003), palm: species(palm, 0.0024) }
+  return {
+    pine: species(pine, 0.0016, 'evergreen'), oak: species(oak, 0.0018, 'leafy'),
+    blossom: species(blossom, 0.003, 'blossom'), palm: species(palm, 0.0024, 'evergreen'),
+  }
 }

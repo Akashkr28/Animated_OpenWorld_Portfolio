@@ -3,7 +3,7 @@ import { useRapier } from '@react-three/rapier'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import * as THREE from 'three'
 import { distToPath, distToRiver, distToZone, heightAt, mulberry32, slopeAt, smoothstep } from './heightfield'
-import { addSway } from './uniforms'
+import { addSeasonal, addSway } from './uniforms'
 import FallingLeaves from './FallingLeaves'
 import { buildTrees } from './trees'
 import { nearSocial } from './layout'
@@ -56,7 +56,7 @@ function Instances({ geometry, items, sway, flat = true, castShadow = true }) {
   const mesh = useRef()
   const material = useMemo(() => {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: flat })
-    return sway ? addSway(m, sway) : m
+    return addSeasonal(sway ? addSway(m, sway) : m, { dry: !!sway })
   }, [flat, sway])
 
   useLayoutEffect(() => placeInstances(mesh.current, items), [items])

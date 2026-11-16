@@ -4,7 +4,7 @@ import { RigidBody, TrimeshCollider } from '@react-three/rapier'
 import * as THREE from 'three'
 import { heights, heightAt, meadowColor, meadowNoise, mulberry32, SEG, slopeAt, smoothstep, SPAN } from './heightfield'
 import { PATHS, SOCIAL, ZONES } from './layout'
-import { world } from './uniforms'
+import { SEASON_GLSL, world } from './uniforms'
 
 const SAND = [0xf1, 0xd9, 0xa8]
 const WET = [0xc9, 0xad, 0x83]
@@ -114,17 +114,23 @@ function terrainMaterial(far, core) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uCore = { value: core }
     shader.uniforms.uWet = world.uWet
+    Object.assign(shader.uniforms, { uSpring: world.uSpring, uAutumn: world.uAutumn, uSnow: world.uSnow })
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec2 vGround;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGround = position.xz;')
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec2 vGround;\nuniform sampler2D uCore;\nuniform float uWet;')
+      .replace('#include <common>', `#include <common>\nvarying vec2 vGround;\nuniform sampler2D uCore;\nuniform float uWet;\n${SEASON_GLSL}`)
       .replace('#include <map_fragment>', `
         vec2 coreUv = vGround / ${CORE_SPAN.toFixed(1)} + 0.5;
         float inCore = 1.0 - smoothstep(0.42, 0.5, max(abs(coreUv.x - 0.5), abs(coreUv.y - 0.5)));
         vec4 ground = mix(texture2D(map, vMapUv), texture2D(uCore, vec2(coreUv.x, 1.0 - coreUv.y)), inCore);
         diffuseColor *= ground;
         diffuseColor.rgb *= 1.0 - uWet * 0.26;`)
+      // Autumn dries the meadows, and winter snow lies on everything above the waterline.
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        diffuseColor.rgb = autumnDry(diffuseColor.rgb, uAutumn * 0.55);
+        float above = smoothstep(0.35, 1.0, seasonWorldPos(-vViewPosition).y);
+        diffuseColor.rgb = snowCover(diffuseColor.rgb, seasonWorldNormal(normal), uSnow * 0.8 * above);`)
   }
   return material
 }
